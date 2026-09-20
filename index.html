@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RouteStory - 3D Strava Frame</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable dark mode by adding 'dark' class to html
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            400: '#ff7b42',
+                            500: '#fc4c02', // Strava orange
+                            600: '#e34402',
+                        },
+                        darkbg: {
+                            900: '#090e17', // Rich dark blue-black
+                            800: '#111827',
+                            700: '#1f2937',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            transition: background-color 0.5s ease, color 0.5s ease;
+            cursor: default;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
+        }
+        .logo-draw {
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: drawLogo 2s ease-in-out forwards;
+        }
+        @keyframes drawLogo {
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* Jejak Kursor Pelari */
+        .trail-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fc4c02;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            box-shadow: 0 0 10px rgba(252,76,2,0.8);
+        }
+
+        /* Glassmorphism */
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #fc4c02 0%, #ff9d00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 3D Frame Interactive */
+        .mockup-container {
+            perspective: 1200px;
+            cursor: grab;
+        }
+        .mockup-container:active {
+            cursor: grabbing;
+        }
+        .mockup-frame {
+            width: 320px;
+            height: 400px;
+            border: 20px solid #1a1a1c;
+            border-radius: 12px;
+            background: #222;
+            box-shadow: 
+                20px 20px 60px rgba(0,0,0,0.3),
+                inset 0 0 0 8px #f5f5f5; /* Inner mat */
+            position: relative;
+            transform-style: preserve-3d;
+            user-select: none;
+            /* Animation handled by JS RequestAnimationFrame now */
+        }
+        
+        .frame-content {
+            transform: translateZ(20px);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            width: 100%;
+            height: 100%;
+            padding: 24px;
+            background-color: #1a1a1c;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .frame-back {
+            position: absolute;
+            inset: -20px;
+            background: #111;
+            transform: translateZ(-1px) rotateY(180deg);
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #333;
+        }
+
+        .mockup-route {
+            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.7));
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawRoute 3s ease-out forwards 3s; 
+        }
+        @keyframes drawRoute {
+            to { stroke-dashoffset: 0; }
+        }
+    </style>
+</head>
+<!-- Initial Theme Classes -->
+<body class="antialiased overflow-x-hidden selection:bg-brand-500 selection:text-white bg-slate-50 dark:bg-darkbg-900 text-gray-900 dark:text-gray-100">
+
+    <!-- Script to prevent unstyled flash of wrong theme -->
+    <script>
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- INTRO / PRELOADER ANIMATION -->
+    <div id="preloader" class="bg-white dark:bg-darkbg-900 text-gray-900 dark:text-white">
+        <div class="relative flex flex-col items-center justify-center">
+            <!-- 3D Logo Drawing -->
+            <svg width="120" height="120" viewBox="0 0 100 100" class="mb-6">
+                <path d="M20,80 L80,80 L50,20 Z" fill="none" stroke="#fc4c02" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="logo-draw" />
+                <circle cx="50" cy="20" r="5" fill="#fc4c02" class="animate-ping" style="animation-duration: 1.5s; animation-delay: 1.5s;" />
+                <circle cx="20" cy="80" r="5" fill="#fc4c02" />
+                <circle cx="80" cy="80" r="5" fill="#fc4c02" />
+            </svg>
+            
+            <div class="z-10 font-black text-5xl tracking-tighter flex items-center gap-1">
+                Route<span class="text-brand-500">Story</span>
+            </div>
+        </div>
+        <div class="mt-8 text-brand-500 font-bold text-sm tracking-[0.3em] uppercase animate-pulse">
+            Rendering 3D Route...
+        </div>
+    </div>
+
+    <!-- BACKGROUND DECORATION -->
+    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <!-- Blobs for Dark Mode -->
+        <div class="hidden dark:block absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-500/15 rounded-full blur-[120px] animate-blob"></div>
+        <div class="hidden dark:block absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
+        
+        <!-- Blobs for Light Mode -->
+        <div class="dark:hidden absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-500/10 rounded-full blur-[100px]"></div>
+        <div class="dark:hidden absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-orange-300/20 rounded-full blur-[100px]"></div>
+        
+        <!-- Texture -->
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/clean-textile.png')] opacity-[0.2] dark:opacity-[0.05]"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-nav border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-darkbg-900/80" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="#" class="font-black text-2xl tracking-tighter flex items-center gap-2">
+                        <div class="w-8 h-8 rounded bg-brand-500 flex justify-center items-center shadow-lg shadow-brand-500/30">
+                            <i class="fa-solid fa-route text-white text-sm"></i>
+                        </div>
+                        Route<span class="text-brand-500">Story</span>
+                    </a>
+                </div>
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#home" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Beranda</a>
+                    <a href="#visi-misi" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Visi & Misi</a>
+                    <a href="#metode" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Metode</a>
+                    <a href="#organisasi" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Tim Kami</a>
+                    
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle" class="ml-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-inner">
+                        <i id="theme-toggle-dark-icon" class="fa-solid fa-moon text-gray-500 dark:text-gray-400 hidden"></i>
+                        <i id="theme-toggle-light-icon" class="fa-solid fa-sun text-brand-500 hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 1. HOME / HERO SECTION -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full flex flex-col md:flex-row items-center gap-12">
+            
+            <!-- Left Text -->
+            <div class="md:w-1/2 text-left" data-aos="fade-right" data-aos-delay="2500">
+                <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-500 text-sm font-bold mb-6">
+                    <i class="fa-solid fa-medal"></i> 3D Strava Tangible Artwork
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black leading-[1.1] mb-6 tracking-tight">
+                    Ubah Jejak Strava-mu Menjadi <span class="text-gradient">Bingkai Nyata</span>
+                </h1>
+                <p class="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-xl leading-relaxed">
+                    Jangan biarkan pencapaian larimu hanya menjadi deretan angka di layar digital. Abadikan rute terbaikmu—dari Finisher 10K hingga Ultra Trail—menjadi karya seni fisik 3D eksklusif untuk dipajang di ruang tamu.
+                </p>
+                <div class="flex gap-4">
+                    <a href="#visi-misi" class="bg-brand-500 hover:bg-brand-600 shadow-[0_10px_30px_rgba(252,76,2,0.3)] hover:scale-105 text-white font-bold py-4 px-8 rounded-full transition-all duration-300 inline-flex items-center gap-3">
+                        Mulai Eksplorasi <i class="fa-solid fa-arrow-down"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CSS 360 INTERACTIVE 3D FRAME MOCKUP -->
+            <div class="md:w-1/2 relative flex justify-center flex-col items-center" data-aos="zoom-in" data-aos-delay="2800">
+                
+                <div class="mockup-container w-full h-[450px] flex items-center justify-center relative">
+                    <div class="mockup-frame">
+                        <!-- Front Face -->
+                        <div class="frame-content rounded-sm">
+                            <div class="text-left mb-4 z-10">
+                                <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Selamat, Kamu Berhasil.</p>
+                                <h2 class="text-white font-black text-2xl uppercase mt-1">10K Finisher</h2>
+                                <div class="w-12 h-1 bg-brand-500 mt-2 rounded-full shadow-[0_0_10px_#fc4c02]"></div>
+                            </div>
+                            
+                            <div class="flex-grow flex items-center justify-center relative z-10">
+                                <svg width="180" height="180" viewBox="0 0 100 100" class="overflow-visible">
+                                    <path d="M20,80 L80,80 L60,40 L30,30 Z" fill="none" stroke="#631e00" stroke-width="12" stroke-linejoin="round" transform="translate(4,4)" />
+                                    <path d="M20,80 L80,80 L60,40 L30,30 Z" fill="none" stroke="#fc4c02" stroke-width="8" stroke-linejoin="round" class="mockup-route" />
+                                    <circle cx="20" cy="80" r="4" fill="#fff" />
+                                    <circle cx="30" cy="30" r="4" fill="#fff" />
+                                </svg>
+                            </div>
+                            
+                            <div class="flex justify-between border-t border-gray-700/80 pt-4 z-10">
+                                <div>
+                                    <p class="text-[9px] text-gray-400 uppercase font-semibold">Distance</p>
+                                    <p class="text-white text-sm font-bold">10.14 <span class="text-xs text-brand-500">km</span></p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] text-gray-400 uppercase font-semibold">Pace</p>
+                                    <p class="text-white text-sm font-bold">6:02 <span class="text-xs text-brand-500">/km</span></p>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] text-gray-400 uppercase font-semibold">Time</p>
+                                    <p class="text-white text-sm font-bold">1h 01m</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Back Face -->
+                        <div class="frame-back">
+                            <i class="fa-solid fa-person-running text-gray-600 text-5xl mb-4"></i>
+                            <p class="text-gray-500 font-black tracking-widest uppercase">RouteStory</p>
+                            <p class="text-gray-600 text-xs mt-2">Authentic 3D Memorabilia</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instruction -->
+                <div class="mt-4 flex items-center gap-2 text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-500/10 px-5 py-2 rounded-full shadow-sm border border-brand-100 dark:border-brand-500/20 animate-bounce">
+                    <i class="fa-solid fa-hand-pointer"></i> <span>Interaktif: Putar & Tahan Bingkai!</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Visi, Misi & Latar Belakang -->
+    <section id="visi-misi" class="py-24 relative bg-white dark:bg-darkbg-800 border-y border-gray-200 dark:border-gray-800 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-24 text-center max-w-4xl mx-auto" data-aos="fade-up">
+                <div class="inline-block p-4 rounded-3xl bg-brand-50 dark:bg-brand-500/10 mb-6 border border-brand-100 dark:border-brand-500/20 shadow-sm">
+                    <i class="fa-solid fa-quote-left text-3xl text-brand-500"></i>
+                </div>
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Latar Belakang</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-8 leading-tight">Membawa Kebanggaan Digital ke Dunia Nyata</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                    Banyaknya pelari dan pesepeda yang menggunakan aplikasi Strava hanya membiarkan datanya mengendap sebagai rekam jejak digital. Padahal, keringat pencapaian memiliki nilai emosional yang amat tinggi. <br><br>
+                    <strong>RouteStory</strong> hadir mengubah kenangan digital tersebut menjadi sebuah pajangan dinding atau bingkai foto 3D yang nyata, bisa disentuh, dan dipamerkan dengan bangga.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <!-- Visi -->
+                <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-100 dark:border-gray-600 shadow-lg p-10 rounded-3xl relative overflow-hidden group transition-colors duration-500" data-aos="fade-right">
+                    <div class="absolute -right-10 -top-10 text-9xl text-gray-100 dark:text-white/5 transition-colors duration-500">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <div class="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-500/30 relative z-10">
+                        <i class="fa-solid fa-rocket text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-4 relative z-10">Visi Inovasi</h3>
+                    <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg relative z-10">
+                        Menjadi pelopor inovasi yang mengubah rekam jejak digital olahraga menjadi karya seni fisik 3D bernilai tinggi dan berkesan seumur hidup.
+                    </p>
+                </div>
+                <!-- Misi -->
+                <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-100 dark:border-gray-600 shadow-lg p-10 rounded-3xl relative overflow-hidden group transition-colors duration-500" data-aos="fade-left">
+                    <div class="absolute -right-10 -top-10 text-9xl text-gray-100 dark:text-white/5 transition-colors duration-500">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                    <div class="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-500/30 relative z-10">
+                        <i class="fa-solid fa-bullseye text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-4 relative z-10">Misi Eksekusi</h3>
+                    <ul class="space-y-4 text-gray-600 dark:text-gray-300 relative z-10">
+                        <li class="flex items-start gap-4">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1"></i>
+                            <span>Menyediakan layanan kustomisasi rute GPS menjadi bingkai nyata yang elegan.</span>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1"></i>
+                            <span>Menggunakan teknologi cetak 3D untuk mereplika lekuk rute secara presisi dan estetik.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tujuan Bisnis -->
+            <div class="bg-brand-500 text-white p-12 rounded-3xl text-center max-w-4xl mx-auto shadow-xl shadow-brand-500/20" data-aos="zoom-in">
+                <h3 class="text-2xl font-black mb-4">Tujuan Bisnis</h3>
+                <p class="text-brand-50 text-lg leading-relaxed">
+                    Memberikan <span class="font-bold border-b-2 border-white">Business Value</span> yang nyata dengan mengomersialkan kepuasan emosional pengguna Strava menjadi produk fisik bernilai jual. Kami menargetkan klien aktif secara langsung (jemput bola) yang menginginkan kenang-kenangan eksklusif dari *event* balap lari atau bersepeda.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Metode Pendekatan -->
+    <section id="metode" class="py-24 relative bg-gray-50 dark:bg-darkbg-900 z-10 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-20" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Metode Pendekatan</h2>
+                <h3 class="text-3xl md:text-5xl font-black">Full Project-Based Approach</h3>
+                <p class="mt-6 text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                    Karena kami mencari klien (bukan sekadar menunggu pesanan), kami beroperasi menggunakan pendekatan <strong>Organisasi Berbasis Proyek</strong>. Setiap klien adalah satu <strong>Proyek Unik</strong> dengan penerapan siklus PDCA.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                <!-- Line Desktop -->
+                <div class="hidden md:block absolute top-12 left-[10%] right-[10%] h-1 bg-gray-200 dark:bg-gray-700 z-0 rounded-full transition-colors duration-500"></div>
+                
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="0">
+                    <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white dark:group-hover:text-white transition-colors">P</div>
+                    <h4 class="font-bold mb-3 text-xl">Plan</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Kesepakatan data Strava, pemilihan desain warna filamen 3D, jenis bingkai, dan harga dengan klien.</p>
+                </div>
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">D</div>
+                    <h4 class="font-bold mb-3 text-xl">Do</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Ekstraksi data GPX, pemodelan rute 3D, mencetak relief menggunakan *3D Printer*, dan perakitan manual bingkai.</p>
+                </div>
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">C</div>
+                    <h4 class="font-bold mb-3 text-xl">Check</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400"><em>Quality Control</em> memastikan ketepatan angka statistik lari, ejaan nama, dan kekokohan perakitan 3D.</p>
+                </div>
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">A</div>
+                    <h4 class="font-bold mb-3 text-xl">Action</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Pengiriman bingkai fisik dengan pengemasan aman (anti pecah) ke alamat klien. Evaluasi dan penutupan proyek.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Struktur Organisasi -->
+    <section id="organisasi" class="py-24 relative bg-white dark:bg-darkbg-800 border-t border-gray-200 dark:border-gray-800 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Tim Kami (4 Orang)</h2>
+                <h3 class="text-3xl md:text-5xl font-black">Project-Oriented Structure</h3>
+                <p class="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Struktur bagan fungsional berbasis proyek secara langsung untuk eksekusi operasional yang lincah.
+                </p>
+            </div>
+
+            <!-- BAGAN STRUKTUR ORGANISASI (HIERARCHY TREE) -->
+            <div class="flex flex-col items-center w-full max-w-5xl mx-auto overflow-x-auto pb-8">
+                
+                <!-- LEVEL 1: CIO -->
+                <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-72 text-center z-10 relative transition-colors duration-500" data-aos="fade-up">
+                    <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
+                        <i class="fa-solid fa-chess-king text-2xl"></i>
+                    </div>
+                    <h4 class="font-bold text-lg">ALEXANDER AGUNG W.P.</h4>
+                    <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">CIO / Head of Project</div>
+                </div>
+                
+                <!-- Connector 1 -->
+                <div class="w-0.5 h-10 bg-gray-300 dark:bg-gray-600 transition-colors duration-500" data-aos="fade-in" data-aos-delay="100"></div>
+                
+                <!-- LEVEL 2: PM -->
+                <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-72 text-center z-10 relative transition-colors duration-500" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
+                        <i class="fa-solid fa-list-check text-2xl"></i>
+                    </div>
+                    <h4 class="font-bold text-lg">MUHAMMAD RAIZ B.</h4>
+                    <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">Project Manager</div>
+                </div>
+
+                <!-- Connector 2 (Stem) -->
+                <div class="w-0.5 h-10 bg-gray-300 dark:bg-gray-600 transition-colors duration-500" data-aos="fade-in" data-aos-delay="300"></div>
+
+                <!-- Horizontal Branch -->
+                <div class="w-[80%] md:w-[60%] border-t-2 border-gray-300 dark:border-gray-600 relative transition-colors duration-500" data-aos="zoom-in" data-aos-delay="300">
+                    <!-- Downward tips -->
+                    <div class="absolute left-0 top-0 w-0.5 h-8 bg-gray-300 dark:bg-gray-600 transform -translate-x-1/2 transition-colors duration-500"></div>
+                    <div class="absolute right-0 top-0 w-0.5 h-8 bg-gray-300 dark:bg-gray-600 transform translate-x-1/2 transition-colors duration-500"></div>
+                </div>
+
+                <!-- LEVEL 3: Staffs -->
+                <div class="w-[90%] md:w-[70%] flex justify-between mt-8 relative" data-aos="fade-up" data-aos-delay="400">
+                    <!-- Left Sibling -->
+                    <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-[45%] text-center z-10 relative transition-colors duration-500">
+                        <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
+                            <i class="fa-solid fa-database text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-lg">BIMO SATRIO</h4>
+                        <div class="text-brand-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">System & Data Analyst</div>
+                    </div>
+                    <!-- Right Sibling -->
+                    <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-[45%] text-center z-10 relative transition-colors duration-500">
+                        <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
+                            <i class="fa-solid fa-cube text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-lg">KEIRIO OMAR A.</h4>
+                        <div class="text-brand-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">3D Designer & Production</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-10 text-center relative z-10">
+        <div class="font-black text-xl tracking-tighter text-white flex justify-center items-center gap-2 mb-4 opacity-50 hover:opacity-100 transition-opacity">
+            Route<span class="text-brand-500">Story</span>
+        </div>
+        <p class="text-xs uppercase tracking-widest">Tugas Akhir Manajemen Industri TI &copy; 2026</p>
+    </footer>
+
+    <!-- Interactive Scripts -->
+    <script>
+        // DARK MODE TOGGLE LOGIC
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Set initial icon
+        if (document.documentElement.classList.contains('dark')) {
+            lightIcon.classList.remove('hidden');
+        } else {
+            darkIcon.classList.remove('hidden');
+        }
+
+        themeToggleBtn.addEventListener('click', function() {
+            // Toggle icons
+            darkIcon.classList.toggle('hidden');
+            lightIcon.classList.toggle('hidden');
+
+            // Toggle theme
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+        });
+
+
+        // AOS Init after preloader finished
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const preloader = document.getElementById('preloader');
+                preloader.style.opacity = '0';
+                preloader.style.visibility = 'hidden';
+                
+                // Initialize AOS after preloader is gone
+                setTimeout(() => {
+                    AOS.init({ once: true, offset: 50, duration: 800 });
+                }, 500);
+            }, 2500); // Wait 2.5s for intro animation
+        });
+
+        // 3D FRAME INTERACTIVE DRAG + AUTO SPIN LOGIC
+        const frameContainer = document.querySelector('.mockup-container');
+        const frame = document.querySelector('.mockup-frame');
+        let isDragging = false;
+        let previousX = 0, previousY = 0;
+        let currentRotX = 5, currentRotY = -15;
+        let spinSpeed = 0.3; // Speed of auto spin
+
+        // Animation Loop for auto spinning
+        function animateSpin() {
+            if (!isDragging) {
+                currentRotY += spinSpeed;
+                frame.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+            }
+            requestAnimationFrame(animateSpin);
+        }
+        requestAnimationFrame(animateSpin);
+
+        // Mouse Events
+        frameContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousX = e.pageX;
+            previousY = e.pageY;
+            frame.style.transition = 'none'; // Snappy dragging
+        });
+
+        window.addEventListener('mouseup', () => {
+            if(isDragging) {
+                isDragging = false;
+                // Add smooth transition back when they let go, auto spin resumes
+                frame.style.transition = 'transform 0.2s ease-out';
+                setTimeout(() => {
+                    frame.style.transition = 'none'; // remove transition for smooth auto spin
+                }, 200);
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            createTrail(e.pageX, e.pageY);
+
+            if (!isDragging) return;
+            e.preventDefault(); 
+            const deltaX = e.pageX - previousX;
+            const deltaY = e.pageY - previousY;
+            
+            // Adjust sensitivity
+            currentRotY += deltaX * 0.6;
+            currentRotX -= deltaY * 0.6; 
+            
+            currentRotX = Math.max(-80, Math.min(80, currentRotX));
+            
+            frame.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+            
+            previousX = e.pageX;
+            previousY = e.pageY;
+        });
+
+        // Touch Events for Mobile Interaction
+        frameContainer.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            previousX = e.touches[0].pageX;
+            previousY = e.touches[0].pageY;
+            frame.style.transition = 'none';
+        }, {passive: false});
+
+        window.addEventListener('touchend', () => {
+            if(isDragging) {
+                isDragging = false;
+                frame.style.transition = 'transform 0.2s ease-out';
+                setTimeout(() => {
+                    frame.style.transition = 'none';
+                }, 200);
+            }
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const deltaX = e.touches[0].pageX - previousX;
+            const deltaY = e.touches[0].pageY - previousY;
+            
+            currentRotY += deltaX * 0.8;
+            currentRotX -= deltaY * 0.8; 
+            currentRotX = Math.max(-80, Math.min(80, currentRotX));
+            
+            frame.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+            
+            previousX = e.touches[0].pageX;
+            previousY = e.touches[0].pageY;
+        }, {passive: false});
+
+        // Function to create cursor trail
+        let lastTime = 0;
+        function createTrail(x, y) {
+            const now = Date.now();
+            if (now - lastTime < 30) return; 
+            lastTime = now;
+
+            const dot = document.createElement('div');
+            dot.className = 'trail-dot';
+            dot.style.left = (x - 5) + 'px'; 
+            dot.style.top = (y - 5) + 'px';
+            
+            document.body.appendChild(dot);
+            
+            setTimeout(() => {
+                dot.style.opacity = '0';
+                dot.style.transform = 'scale(2.5)';
+            }, 10);
+
+            setTimeout(() => {
+                dot.remove();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
