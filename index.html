@@ -3,648 +3,865 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RouteStory - 3D Strava Frame</title>
+    <title>RouteStory — Visualisasi Rute &amp; Bingkai Lari 3D Personal</title>
+    <meta name="description" content="RouteStory mengubah rute olahraga dari Strava atau berkas GPX menjadi poster rute, model 3D, halaman kenangan, dan bingkai fisik yang bisa dipajang. Setiap pesanan dikerjakan sebagai proyek.">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link rel="stylesheet" href="assets/css/style.css">
+
     <script>
         tailwind.config = {
-            darkMode: 'class', // Enable dark mode by adding 'dark' class to html
+            darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            400: '#ff7b42',
-                            500: '#fc4c02', // Strava orange
-                            600: '#e34402',
-                        },
-                        darkbg: {
-                            900: '#090e17', // Rich dark blue-black
-                            800: '#111827',
-                            700: '#1f2937',
-                        }
+                        brand: { 400: '#ff7b42', 500: '#fc4c02', 600: '#e34402' },
+                        darkbg: { 900: '#090e17', 800: '#111827', 700: '#1f2937' }
                     },
-                    animation: {
-                        'blob': 'blob 7s infinite',
-                    },
+                    animation: { 'blob': 'blob 7s infinite' },
                     keyframes: {
                         blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '0%':   { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%':  { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%':  { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' }
                         }
                     }
                 }
             }
         }
     </script>
-    <style>
-        body {
-            transition: background-color 0.5s ease, color 0.5s ease;
-            cursor: default;
-        }
-
-        /* Preloader */
-        #preloader {
-            position: fixed;
-            inset: 0;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.8s ease-out, visibility 0.8s;
-        }
-        .logo-draw {
-            stroke-dasharray: 500;
-            stroke-dashoffset: 500;
-            animation: drawLogo 2s ease-in-out forwards;
-        }
-        @keyframes drawLogo {
-            to { stroke-dashoffset: 0; }
-        }
-
-        /* Jejak Kursor Pelari */
-        .trail-dot {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #fc4c02;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9998;
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
-            box-shadow: 0 0 10px rgba(252,76,2,0.8);
-        }
-
-        /* Glassmorphism */
-        .glass-nav {
-            backdrop-filter: blur(12px);
-            transition: background-color 0.5s ease, border-color 0.5s ease;
-        }
-
-        .text-gradient {
-            background: linear-gradient(135deg, #fc4c02 0%, #ff9d00 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* 3D Frame Interactive */
-        .mockup-container {
-            perspective: 1200px;
-            cursor: grab;
-        }
-        .mockup-container:active {
-            cursor: grabbing;
-        }
-        .mockup-frame {
-            width: 320px;
-            height: 400px;
-            border: 20px solid #1a1a1c;
-            border-radius: 12px;
-            background: #222;
-            box-shadow: 
-                20px 20px 60px rgba(0,0,0,0.3),
-                inset 0 0 0 8px #f5f5f5; /* Inner mat */
-            position: relative;
-            transform-style: preserve-3d;
-            user-select: none;
-            /* Animation handled by JS RequestAnimationFrame now */
-        }
-        
-        .frame-content {
-            transform: translateZ(20px);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            width: 100%;
-            height: 100%;
-            padding: 24px;
-            background-color: #1a1a1c;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .frame-back {
-            position: absolute;
-            inset: -20px;
-            background: #111;
-            transform: translateZ(-1px) rotateY(180deg);
-            backface-visibility: hidden;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #333;
-        }
-
-        .mockup-route {
-            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.7));
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            animation: drawRoute 3s ease-out forwards 3s; 
-        }
-        @keyframes drawRoute {
-            to { stroke-dashoffset: 0; }
-        }
-    </style>
 </head>
-<!-- Initial Theme Classes -->
+
 <body class="antialiased overflow-x-hidden selection:bg-brand-500 selection:text-white bg-slate-50 dark:bg-darkbg-900 text-gray-900 dark:text-gray-100">
 
-    <!-- Script to prevent unstyled flash of wrong theme -->
+    <!-- Cegah kedip tema salah sebelum CSS selesai dimuat -->
     <script>
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('color-theme') === 'dark' ||
+            (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
     </script>
 
-    <!-- INTRO / PRELOADER ANIMATION -->
+    <a href="#layanan" class="sr-only sr-only-focusable">Lompat ke daftar layanan</a>
+
+    <!-- ===================== PRELOADER ===================== -->
     <div id="preloader" class="bg-white dark:bg-darkbg-900 text-gray-900 dark:text-white">
         <div class="relative flex flex-col items-center justify-center">
-            <!-- 3D Logo Drawing -->
-            <svg width="120" height="120" viewBox="0 0 100 100" class="mb-6">
-                <path d="M20,80 L80,80 L50,20 Z" fill="none" stroke="#fc4c02" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="logo-draw" />
-                <circle cx="50" cy="20" r="5" fill="#fc4c02" class="animate-ping" style="animation-duration: 1.5s; animation-delay: 1.5s;" />
+            <svg width="120" height="120" viewBox="0 0 100 100" class="mb-6" aria-hidden="true">
+                <path d="M20,80 L80,80 L50,20 Z" fill="none" stroke="#fc4c02" stroke-width="6"
+                      stroke-linecap="round" stroke-linejoin="round" class="logo-draw" />
+                <circle cx="50" cy="20" r="5" fill="#fc4c02" class="animate-ping"
+                        style="animation-duration:1.5s; animation-delay:1.5s;" />
                 <circle cx="20" cy="80" r="5" fill="#fc4c02" />
                 <circle cx="80" cy="80" r="5" fill="#fc4c02" />
             </svg>
-            
             <div class="z-10 font-black text-5xl tracking-tighter flex items-center gap-1">
                 Route<span class="text-brand-500">Story</span>
             </div>
         </div>
         <div class="mt-8 text-brand-500 font-bold text-sm tracking-[0.3em] uppercase animate-pulse">
-            Rendering 3D Route...
+            Menyiapkan Halaman...
         </div>
     </div>
 
-    <!-- BACKGROUND DECORATION -->
-    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-        <!-- Blobs for Dark Mode -->
+    <!-- ===================== DEKORASI LATAR ===================== -->
+    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none" aria-hidden="true">
         <div class="hidden dark:block absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-500/15 rounded-full blur-[120px] animate-blob"></div>
-        <div class="hidden dark:block absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-[120px] animate-blob animation-delay-2000"></div>
-        
-        <!-- Blobs for Light Mode -->
+        <div class="hidden dark:block absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-[120px] animate-blob"></div>
         <div class="dark:hidden absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-500/10 rounded-full blur-[100px]"></div>
         <div class="dark:hidden absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-orange-300/20 rounded-full blur-[100px]"></div>
-        
-        <!-- Texture -->
-        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/clean-textile.png')] opacity-[0.2] dark:opacity-[0.05]"></div>
     </div>
 
-    <!-- Navbar -->
+    <!-- ===================== NAVBAR ===================== -->
     <nav class="fixed w-full z-50 transition-all duration-300 glass-nav border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-darkbg-900/80" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
-                <div class="flex-shrink-0 flex items-center">
-                    <a href="#" class="font-black text-2xl tracking-tighter flex items-center gap-2">
-                        <div class="w-8 h-8 rounded bg-brand-500 flex justify-center items-center shadow-lg shadow-brand-500/30">
-                            <i class="fa-solid fa-route text-white text-sm"></i>
-                        </div>
-                        Route<span class="text-brand-500">Story</span>
-                    </a>
-                </div>
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex space-x-8 items-center">
-                    <a href="#home" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Beranda</a>
-                    <a href="#visi-misi" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Visi & Misi</a>
-                    <a href="#metode" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Metode</a>
-                    <a href="#organisasi" class="hover:text-brand-500 transition font-semibold text-sm tracking-wide">Tim Kami</a>
-                    
-                    <!-- Theme Toggle Button -->
-                    <button id="theme-toggle" class="ml-4 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-inner">
+                <a href="#home" class="font-black text-2xl tracking-tighter flex items-center gap-2 flex-shrink-0">
+                    <span class="w-8 h-8 rounded bg-brand-500 flex justify-center items-center shadow-lg shadow-brand-500/30">
+                        <i class="fa-solid fa-route text-white text-sm"></i>
+                    </span>
+                    Route<span class="text-brand-500">Story</span>
+                </a>
+
+                <div class="hidden lg:flex space-x-7 items-center">
+                    <a href="#tentang"    class="hover:text-brand-500 transition font-semibold text-sm">Tentang</a>
+                    <a href="#layanan"    class="hover:text-brand-500 transition font-semibold text-sm">Layanan</a>
+                    <a href="#pipeline"   class="hover:text-brand-500 transition font-semibold text-sm">Proses</a>
+                    <a href="#demo"       class="hover:text-brand-500 transition font-semibold text-sm">Coba Dulu</a>
+                    <a href="#estimator"  class="hover:text-brand-500 transition font-semibold text-sm">Estimasi Biaya</a>
+                    <a href="#metode"     class="hover:text-brand-500 transition font-semibold text-sm">Metode</a>
+                    <a href="#organisasi" class="hover:text-brand-500 transition font-semibold text-sm">Tim</a>
+
+                    <button id="theme-toggle" aria-label="Ganti tema terang/gelap"
+                            class="ml-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shadow-inner">
                         <i id="theme-toggle-dark-icon" class="fa-solid fa-moon text-gray-500 dark:text-gray-400 hidden"></i>
                         <i id="theme-toggle-light-icon" class="fa-solid fa-sun text-brand-500 hidden"></i>
                     </button>
                 </div>
+
+                <div class="flex items-center gap-2 lg:hidden">
+                    <button id="theme-toggle-mobile" aria-label="Ganti tema terang/gelap"
+                            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 transition-colors">
+                        <i class="fa-solid fa-circle-half-stroke text-brand-500"></i>
+                    </button>
+                    <button id="menu-toggle" aria-label="Buka menu" aria-expanded="false"
+                            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 transition-colors">
+                        <i class="fa-solid fa-bars text-brand-500"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden lg:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-darkbg-900">
+            <div class="px-4 py-4 flex flex-col gap-1 text-sm font-semibold">
+                <a href="#tentang"    class="py-2.5 hover:text-brand-500">Tentang</a>
+                <a href="#layanan"    class="py-2.5 hover:text-brand-500">Layanan &amp; Produk</a>
+                <a href="#pipeline"   class="py-2.5 hover:text-brand-500">Proses Pengerjaan</a>
+                <a href="#demo"       class="py-2.5 hover:text-brand-500">Coba Dulu</a>
+                <a href="#estimator"  class="py-2.5 hover:text-brand-500">Estimasi Biaya</a>
+                <a href="#metode"     class="py-2.5 hover:text-brand-500">Metode PDCA</a>
+                <a href="#organisasi" class="py-2.5 hover:text-brand-500">Tim Kami</a>
             </div>
         </div>
     </nav>
 
-    <!-- 1. HOME / HERO SECTION -->
-    <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-        
+    <!-- ===================== 1. HERO ===================== -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center pt-28 pb-16 overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full flex flex-col md:flex-row items-center gap-12">
-            
-            <!-- Left Text -->
+
             <div class="md:w-1/2 text-left" data-aos="fade-right" data-aos-delay="2500">
-                <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-500 text-sm font-bold mb-6">
-                    <i class="fa-solid fa-medal"></i> 3D Strava Tangible Artwork
+                <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-500 text-xs sm:text-sm font-bold mb-6">
+                    <i class="fa-solid fa-medal"></i> Memorabilia Rute Personal
                 </div>
-                <h1 class="text-5xl md:text-7xl font-black leading-[1.1] mb-6 tracking-tight">
-                    Ubah Jejak Strava-mu Menjadi <span class="text-gradient">Bingkai Nyata</span>
+
+                <h1 class="text-4xl md:text-6xl font-black leading-[1.1] mb-6 tracking-tight">
+                    Ubah Rute Olahragamu Menjadi <span class="text-gradient">Karya yang Bisa Dipajang</span>
                 </h1>
-                <p class="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-xl leading-relaxed">
-                    Jangan biarkan pencapaian larimu hanya menjadi deretan angka di layar digital. Abadikan rute terbaikmu—dari Finisher 10K hingga Ultra Trail—menjadi karya seni fisik 3D eksklusif untuk dipajang di ruang tamu.
+
+                <p class="text-base md:text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-xl leading-relaxed">
+                    Pencapaian larimu tidak harus berhenti sebagai angka di layar. Dari berkas
+                    Strava atau GPX, kami membuatkan poster rute, model tiga dimensi, halaman
+                    kenangan yang bisa dibagikan, sampai bingkai fisik untuk dipajang di rumah.
                 </p>
-                <div class="flex gap-4">
-                    <a href="#visi-misi" class="bg-brand-500 hover:bg-brand-600 shadow-[0_10px_30px_rgba(252,76,2,0.3)] hover:scale-105 text-white font-bold py-4 px-8 rounded-full transition-all duration-300 inline-flex items-center gap-3">
-                        Mulai Eksplorasi <i class="fa-solid fa-arrow-down"></i>
+
+                <div class="flex flex-wrap gap-3 mb-8">
+                    <a href="#layanan" class="bg-brand-500 hover:bg-brand-600 shadow-[0_10px_30px_rgba(252,76,2,0.3)] hover:scale-105 text-white font-bold py-3.5 px-7 rounded-full transition-all duration-300 inline-flex items-center gap-3 text-sm">
+                        Lihat Layanan Kami <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <a href="#demo" class="border-2 border-gray-300 dark:border-gray-700 hover:border-brand-500 hover:text-brand-500 font-bold py-3.5 px-7 rounded-full transition-all duration-300 inline-flex items-center gap-3 text-sm">
+                        <i class="fa-solid fa-play"></i> Coba Pratinjau Rute
                     </a>
                 </div>
+
+                <dl class="grid grid-cols-3 gap-3 max-w-md">
+                    <div class="bg-white/70 dark:bg-darkbg-800/70 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3">
+                        <dt class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">Layanan</dt>
+                        <dd class="text-xl font-black text-brand-500">6</dd>
+                    </div>
+                    <div class="bg-white/70 dark:bg-darkbg-800/70 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3">
+                        <dt class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">Tahap Pengerjaan</dt>
+                        <dd class="text-xl font-black text-brand-500">8</dd>
+                    </div>
+                    <div class="bg-white/70 dark:bg-darkbg-800/70 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3">
+                        <dt class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">Kategori</dt>
+                        <dd class="text-xl font-black text-brand-500">4</dd>
+                    </div>
+                </dl>
             </div>
 
-            <!-- CSS 360 INTERACTIVE 3D FRAME MOCKUP -->
+            <!-- Mockup bingkai 3D interaktif -->
             <div class="md:w-1/2 relative flex justify-center flex-col items-center" data-aos="zoom-in" data-aos-delay="2800">
-                
                 <div class="mockup-container w-full h-[450px] flex items-center justify-center relative">
                     <div class="mockup-frame">
-                        <!-- Front Face -->
                         <div class="frame-content rounded-sm">
                             <div class="text-left mb-4 z-10">
-                                <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Selamat, Kamu Berhasil.</p>
+                                <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Dirender dari data GPX</p>
                                 <h2 class="text-white font-black text-2xl uppercase mt-1">10K Finisher</h2>
                                 <div class="w-12 h-1 bg-brand-500 mt-2 rounded-full shadow-[0_0_10px_#fc4c02]"></div>
                             </div>
-                            
                             <div class="flex-grow flex items-center justify-center relative z-10">
-                                <svg width="180" height="180" viewBox="0 0 100 100" class="overflow-visible">
-                                    <path d="M20,80 L80,80 L60,40 L30,30 Z" fill="none" stroke="#631e00" stroke-width="12" stroke-linejoin="round" transform="translate(4,4)" />
-                                    <path d="M20,80 L80,80 L60,40 L30,30 Z" fill="none" stroke="#fc4c02" stroke-width="8" stroke-linejoin="round" class="mockup-route" />
+                                <svg width="180" height="180" viewBox="0 0 100 100" class="overflow-visible" aria-hidden="true">
+                                    <path d="M20,80 L80,80 L60,40 L30,30 Z" fill="none" stroke="#631e00"
+                                          stroke-width="12" stroke-linejoin="round" transform="translate(4,4)" />
+                                    <path d="M20,80 L80,80 L60,40 L30,30 Z" fill="none" stroke="#fc4c02"
+                                          stroke-width="8" stroke-linejoin="round" class="mockup-route" />
                                     <circle cx="20" cy="80" r="4" fill="#fff" />
                                     <circle cx="30" cy="30" r="4" fill="#fff" />
                                 </svg>
                             </div>
-                            
                             <div class="flex justify-between border-t border-gray-700/80 pt-4 z-10">
                                 <div>
                                     <p class="text-[9px] text-gray-400 uppercase font-semibold">Distance</p>
-                                    <p class="text-white text-sm font-bold">10.14 <span class="text-xs text-brand-500">km</span></p>
+                                    <p class="text-white text-sm font-bold">10.21 <span class="text-xs text-brand-500">km</span></p>
                                 </div>
                                 <div>
                                     <p class="text-[9px] text-gray-400 uppercase font-semibold">Pace</p>
-                                    <p class="text-white text-sm font-bold">6:02 <span class="text-xs text-brand-500">/km</span></p>
+                                    <p class="text-white text-sm font-bold">6:00 <span class="text-xs text-brand-500">/km</span></p>
                                 </div>
                                 <div>
-                                    <p class="text-[9px] text-gray-400 uppercase font-semibold">Time</p>
-                                    <p class="text-white text-sm font-bold">1h 01m</p>
+                                    <p class="text-[9px] text-gray-400 uppercase font-semibold">Elev Gain</p>
+                                    <p class="text-white text-sm font-bold">213 <span class="text-xs text-brand-500">m</span></p>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Back Face -->
                         <div class="frame-back">
-                            <i class="fa-solid fa-person-running text-gray-600 text-5xl mb-4"></i>
+                            <i class="fa-solid fa-qrcode text-gray-600 text-5xl mb-4"></i>
                             <p class="text-gray-500 font-black tracking-widest uppercase">RouteStory</p>
-                            <p class="text-gray-600 text-xs mt-2">Authentic 3D Memorabilia</p>
+                            <p class="text-gray-600 text-xs mt-2">QR menuju microsite rute</p>
                         </div>
                     </div>
                 </div>
-
-                <!-- Instruction -->
-                <div class="mt-4 flex items-center gap-2 text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-500/10 px-5 py-2 rounded-full shadow-sm border border-brand-100 dark:border-brand-500/20 animate-bounce">
-                    <i class="fa-solid fa-hand-pointer"></i> <span>Interaktif: Putar & Tahan Bingkai!</span>
+                <div class="mt-4 flex items-center gap-2 text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-500/10 px-5 py-2 rounded-full shadow-sm border border-brand-100 dark:border-brand-500/20 animate-bounce text-sm">
+                    <i class="fa-solid fa-hand-pointer"></i> <span>Interaktif: putar &amp; tahan bingkai!</span>
                 </div>
-
             </div>
         </div>
     </section>
 
-    <!-- 2. Visi, Misi & Latar Belakang -->
-    <section id="visi-misi" class="py-24 relative bg-white dark:bg-darkbg-800 border-y border-gray-200 dark:border-gray-800 transition-colors duration-500">
+    <!-- ===================== 2. TENTANG ===================== -->
+    <section id="tentang" class="py-24 relative bg-white dark:bg-darkbg-800 border-y border-gray-200 dark:border-gray-800 transition-colors duration-500">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-24 text-center max-w-4xl mx-auto" data-aos="fade-up">
-                <div class="inline-block p-4 rounded-3xl bg-brand-50 dark:bg-brand-500/10 mb-6 border border-brand-100 dark:border-brand-500/20 shadow-sm">
-                    <i class="fa-solid fa-quote-left text-3xl text-brand-500"></i>
-                </div>
-                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Latar Belakang</h2>
+
+            <div class="mb-20 text-center max-w-4xl mx-auto" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Ringkasan Perusahaan</h2>
                 <h3 class="text-3xl md:text-5xl font-black mb-8 leading-tight">Membawa Kebanggaan Digital ke Dunia Nyata</h3>
                 <p class="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-                    Banyaknya pelari dan pesepeda yang menggunakan aplikasi Strava hanya membiarkan datanya mengendap sebagai rekam jejak digital. Padahal, keringat pencapaian memiliki nilai emosional yang amat tinggi. <br><br>
-                    <strong>RouteStory</strong> hadir mengubah kenangan digital tersebut menjadi sebuah pajangan dinding atau bingkai foto 3D yang nyata, bisa disentuh, dan dipamerkan dengan bangga.
+                    Aplikasi pencatat aktivitas seperti Strava menyimpan rute, jarak, durasi, pace,
+                    elevasi, dan tanggal secara detail — tetapi data itu nyaris tidak pernah
+                    digunakan lagi setelah aktivitas selesai.
+                    <br><br>
+                    <strong>RouteStory</strong> menjembatani hal tersebut. Kami mengolah rute dan
+                    statistik dari aktivitasmu, merancang desainnya bersamamu, menyiapkan pratinjau
+                    sebelum apa pun dicetak, lalu menyerahkan hasilnya dalam bentuk digital maupun
+                    fisik — semuanya dikerjakan rapi sebagai satu proyek.
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-8 mb-12">
-                <!-- Visi -->
-                <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-100 dark:border-gray-600 shadow-lg p-10 rounded-3xl relative overflow-hidden group transition-colors duration-500" data-aos="fade-right">
-                    <div class="absolute -right-10 -top-10 text-9xl text-gray-100 dark:text-white/5 transition-colors duration-500">
+            <!-- Rantai nilai TI -->
+            <div class="mb-20" data-aos="fade-up">
+                <h4 class="text-center font-black text-xl mb-8">Bagaimana Kami Bekerja</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 max-w-6xl mx-auto">
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-inbox text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Pengumpulan &amp; validasi data</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-file-code text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Pengolahan GPX &amp; koordinat GPS</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-chart-simple text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Ekstraksi statistik perjalanan</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-draw-polygon text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Visualisasi &amp; pemodelan rute</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-eye text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Desain &amp; pratinjau digital</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center">
+                        <i class="fa-solid fa-diagram-project text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Pengelolaan data &amp; proyek</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 text-center col-span-2 md:col-span-4 lg:col-span-1">
+                        <i class="fa-solid fa-print text-brand-500 mb-2"></i>
+                        <p class="text-xs font-bold leading-snug">Integrasi dengan produksi fisik</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visi & Misi -->
+            <div class="grid lg:grid-cols-2 gap-8 mb-12">
+                <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-100 dark:border-gray-600 shadow-lg p-10 rounded-3xl relative overflow-hidden transition-colors duration-500" data-aos="fade-right">
+                    <div class="absolute -right-10 -top-10 text-9xl text-gray-100 dark:text-white/5" aria-hidden="true">
                         <i class="fa-solid fa-eye"></i>
                     </div>
                     <div class="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-500/30 relative z-10">
                         <i class="fa-solid fa-rocket text-white text-2xl"></i>
                     </div>
-                    <h3 class="text-2xl font-black mb-4 relative z-10">Visi Inovasi</h3>
+                    <h3 class="text-2xl font-black mb-4 relative z-10">Visi</h3>
                     <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-lg relative z-10">
-                        Menjadi pelopor inovasi yang mengubah rekam jejak digital olahraga menjadi karya seni fisik 3D bernilai tinggi dan berkesan seumur hidup.
+                        Menjadi perusahaan teknologi kreatif yang mampu mengubah rekam jejak digital
+                        aktivitas olahraga menjadi karya personal bernilai emosional, estetis, dan
+                        berkesan dalam jangka panjang.
                     </p>
                 </div>
-                <!-- Misi -->
-                <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-100 dark:border-gray-600 shadow-lg p-10 rounded-3xl relative overflow-hidden group transition-colors duration-500" data-aos="fade-left">
-                    <div class="absolute -right-10 -top-10 text-9xl text-gray-100 dark:text-white/5 transition-colors duration-500">
+
+                <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-100 dark:border-gray-600 shadow-lg p-10 rounded-3xl relative overflow-hidden transition-colors duration-500" data-aos="fade-left">
+                    <div class="absolute -right-10 -top-10 text-9xl text-gray-100 dark:text-white/5" aria-hidden="true">
                         <i class="fa-solid fa-bullseye"></i>
                     </div>
                     <div class="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-brand-500/30 relative z-10">
                         <i class="fa-solid fa-bullseye text-white text-2xl"></i>
                     </div>
-                    <h3 class="text-2xl font-black mb-4 relative z-10">Misi Eksekusi</h3>
-                    <ul class="space-y-4 text-gray-600 dark:text-gray-300 relative z-10">
-                        <li class="flex items-start gap-4">
-                            <i class="fa-solid fa-circle-check text-brand-500 mt-1"></i>
-                            <span>Menyediakan layanan kustomisasi rute GPS menjadi bingkai nyata yang elegan.</span>
+                    <h3 class="text-2xl font-black mb-4 relative z-10">Misi</h3>
+                    <ul class="space-y-3 text-gray-600 dark:text-gray-300 relative z-10 text-[15px]">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1 flex-shrink-0"></i>
+                            <span>Menyediakan layanan pengolahan data GPS menjadi visualisasi rute dan model tiga dimensi yang personal.</span>
                         </li>
-                        <li class="flex items-start gap-4">
-                            <i class="fa-solid fa-circle-check text-brand-500 mt-1"></i>
-                            <span>Menggunakan teknologi cetak 3D untuk mereplika lekuk rute secara presisi dan estetik.</span>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1 flex-shrink-0"></i>
+                            <span>Menghasilkan produk yang akurat berdasarkan data aktivitas serta menarik dari sisi desain.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1 flex-shrink-0"></i>
+                            <span>Memberikan pilihan personalisasi warna, teks, statistik, ukuran, dan bentuk keluaran.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1 flex-shrink-0"></i>
+                            <span>Menjalankan setiap pesanan sebagai proyek dengan ruang lingkup, jadwal, biaya, dan hasil yang jelas.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1 flex-shrink-0"></i>
+                            <span>Mengembangkan proses digital yang menghubungkan pengumpulan data, desain, persetujuan, produksi, dan penyerahan.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-circle-check text-brand-500 mt-1 flex-shrink-0"></i>
+                            <span>Melakukan evaluasi berkelanjutan untuk meningkatkan kualitas layanan dan pengalaman pelanggan.</span>
                         </li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Tujuan Bisnis -->
-            <div class="bg-brand-500 text-white p-12 rounded-3xl text-center max-w-4xl mx-auto shadow-xl shadow-brand-500/20" data-aos="zoom-in">
-                <h3 class="text-2xl font-black mb-4">Tujuan Bisnis</h3>
-                <p class="text-brand-50 text-lg leading-relaxed">
-                    Memberikan <span class="font-bold border-b-2 border-white">Business Value</span> yang nyata dengan mengomersialkan kepuasan emosional pengguna Strava menjadi produk fisik bernilai jual. Kami menargetkan klien aktif secara langsung (jemput bola) yang menginginkan kenang-kenangan eksklusif dari *event* balap lari atau bersepeda.
+            <div class="bg-brand-500 text-white p-10 md:p-12 rounded-3xl max-w-5xl mx-auto shadow-xl shadow-brand-500/20" data-aos="zoom-in">
+                <h3 class="text-2xl font-black mb-4 text-center">Business Value</h3>
+                <p class="text-brand-50 text-lg leading-relaxed text-center">
+                    RouteStory mengubah data aktivitas yang sebelumnya hanya mengendap di dalam
+                    aplikasi menjadi produk personal yang memiliki nilai emosional sekaligus nilai
+                    jual. Bagi pengguna, produk berfungsi sebagai simbol pencapaian. Bagi perusahaan,
+                    variasi data dan kebutuhan pelanggan membentuk peluang
+                    <span class="font-bold border-b-2 border-white">layanan kustom berbasis proyek</span>.
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- 3. Metode Pendekatan -->
-    <section id="metode" class="py-24 relative bg-gray-50 dark:bg-darkbg-900 z-10 transition-colors duration-500">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-20" data-aos="fade-up">
-                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Metode Pendekatan</h2>
-                <h3 class="text-3xl md:text-5xl font-black">Full Project-Based Approach</h3>
-                <p class="mt-6 text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
-                    Karena kami mencari klien (bukan sekadar menunggu pesanan), kami beroperasi menggunakan pendekatan <strong>Organisasi Berbasis Proyek</strong>. Setiap klien adalah satu <strong>Proyek Unik</strong> dengan penerapan siklus PDCA.
+    <!-- ===================== 3. LAYANAN & PRODUK ===================== -->
+    <section id="layanan" class="py-24 relative bg-gray-50 dark:bg-darkbg-900 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Layanan &amp; Produk</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-6">Apa Saja yang Kami Kerjakan</h3>
+                <p class="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                    Mulai dari olah data aktivitas sampai bingkai siap pajang. Pilih kategori untuk
+                    menyaring, lalu klik kartu mana pun untuk melihat apa saja yang Anda terima,
+                    alur pengerjaannya, dan jaminan layanannya.
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
-                <!-- Line Desktop -->
-                <div class="hidden md:block absolute top-12 left-[10%] right-[10%] h-1 bg-gray-200 dark:bg-gray-700 z-0 rounded-full transition-colors duration-500"></div>
-                
-                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="0">
-                    <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white dark:group-hover:text-white transition-colors">P</div>
-                    <h4 class="font-bold mb-3 text-xl">Plan</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Kesepakatan data Strava, pemilihan desain warna filamen 3D, jenis bingkai, dan harga dengan klien.</p>
+            <div id="service-filters" class="flex flex-wrap justify-center gap-2 mb-4" role="tablist" aria-label="Filter kategori layanan"></div>
+            <p id="service-count" class="text-center text-sm text-gray-500 dark:text-gray-400 mb-10" aria-live="polite"></p>
+
+            <div id="service-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+            <p class="mt-10 text-center text-xs text-gray-500 dark:text-gray-500 max-w-3xl mx-auto">
+                <i class="fa-solid fa-circle-info"></i>
+                Seluruh harga yang ditampilkan adalah estimasi awal untuk keperluan demonstrasi.
+                Harga final mengikuti kesepakatan ruang lingkup pada tahap <em>Plan</em>.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== 4. PIPELINE TEKNOLOGI ===================== -->
+    <section id="pipeline" class="py-24 relative bg-white dark:bg-darkbg-800 border-y border-gray-200 dark:border-gray-800 grid-bg transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-14" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Proses Pengerjaan</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-6">Delapan Tahap, dari Data Sampai Produk Jadi</h3>
+                <p class="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                    Supaya Anda tahu persis pesanan Anda sedang ada di mana. Klik tahap mana pun
+                    untuk melihat apa yang dikerjakan di dalamnya, beserta posisinya pada siklus PDCA.
+                </p>
+            </div>
+
+            <div id="pipeline-steps" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-10" role="tablist" aria-label="Tahap pengerjaan"></div>
+
+            <div id="pipeline-detail" class="max-w-5xl mx-auto"></div>
+
+            <div class="mt-20" data-aos="fade-up">
+                <h4 class="text-center font-black text-xl mb-8">Perangkat &amp; Teknologi yang Kami Gunakan</h4>
+                <div id="tech-stack" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 5. DEMO MESIN ===================== -->
+    <section id="demo" class="py-24 relative bg-gray-50 dark:bg-darkbg-900 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Coba Dulu</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-6">Lihat Rute Anda Sebelum Memesan</h3>
+                <p class="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                    Penasaran rute Anda akan terlihat seperti apa? Unggah berkas
+                    <code class="mono text-brand-500">.gpx</code> milik Anda sendiri, atau pakai
+                    contoh data kami, dan lihat pratinjaunya langsung di halaman ini.
+                </p>
+                <p class="mt-4 inline-flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-4 py-2 rounded-full">
+                    <i class="fa-solid fa-lock"></i>
+                    Berkas Anda diproses sepenuhnya di perangkat Anda — tidak ada yang dikirim ke server kami.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-5 gap-6 max-w-6xl mx-auto">
+
+                <div class="lg:col-span-2 space-y-5">
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg">
+                        <h4 class="font-black text-lg mb-4 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-brand-500 text-white text-xs flex items-center justify-center">1</span>
+                            Masukkan Data
+                        </h4>
+
+                        <div id="dropzone" class="dropzone rounded-xl p-6 text-center cursor-pointer mb-4" tabindex="0" role="button"
+                             aria-label="Unggah berkas GPX, atau seret berkas ke sini">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 dark:text-gray-500 mb-3"></i>
+                            <p class="font-bold text-sm mb-1">Seret berkas .gpx ke sini</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">atau klik untuk memilih berkas</p>
+                            <input type="file" id="gpx-input" accept=".gpx,.xml,application/gpx+xml" class="hidden">
+                        </div>
+
+                        <button id="sample-btn" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl transition-colors text-sm inline-flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-flask"></i> Pakai contoh data (Malang 10K)
+                        </button>
+
+                        <div class="mt-5">
+                            <label for="tolerance" class="flex justify-between text-xs font-bold mb-2">
+                                <span>Toleransi simplifikasi</span>
+                                <span id="tolerance-value" class="text-brand-500 mono">4 m</span>
+                            </label>
+                            <input type="range" id="tolerance" min="1" max="30" value="4" step="1"
+                                   class="w-full accent-brand-500 cursor-pointer">
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+                                Semakin besar toleransinya, semakin sedikit titik yang disimpan. Geser
+                                dan perhatikan bagaimana bentuk rute tetap bertahan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-darkbg-900 dark:bg-black border border-gray-700 rounded-2xl p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-bold text-xs uppercase tracking-widest text-gray-400">Log Eksekusi</h4>
+                            <span id="log-status" class="text-[10px] mono text-gray-500">idle</span>
+                        </div>
+                        <div id="pipeline-log" class="mono text-[11px] space-y-1.5 min-h-[140px] max-h-[260px] overflow-y-auto text-gray-400" aria-live="polite">
+                            <p class="text-gray-600">$ menunggu berkas masukan...</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="100">
+
+                <div class="lg:col-span-3">
+                    <div id="demo-result" class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-lg min-h-[520px] flex items-center justify-center">
+                        <div class="text-center text-gray-400 dark:text-gray-600">
+                            <i class="fa-solid fa-route text-5xl mb-4"></i>
+                            <p class="font-bold">Hasil pemrosesan akan muncul di sini</p>
+                            <p class="text-sm mt-1">Unggah berkas atau pakai contoh data untuk memulai.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 6. ESTIMATOR ===================== -->
+    <section id="estimator" class="py-24 relative bg-white dark:bg-darkbg-800 border-y border-gray-200 dark:border-gray-800 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Estimasi Biaya</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-6">Susun Ruang Lingkup Proyek Anda</h3>
+                <p class="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                    Karena kami bekerja per proyek, biaya mengikuti ruang lingkup. Susun kebutuhan
+                    Anda di bawah ini untuk melihat estimasi biaya dan jadwal secara langsung.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-6">
+                        <h4 class="font-black mb-4 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-brand-500 text-white text-xs flex items-center justify-center">1</span>
+                            Pilih paket
+                        </h4>
+                        <div id="est-packages" class="grid sm:grid-cols-2 gap-3"></div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-6">
+                        <h4 class="font-black mb-4 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-brand-500 text-white text-xs flex items-center justify-center">2</span>
+                            Ukuran keluaran
+                        </h4>
+                        <div id="est-sizes" class="grid grid-cols-3 gap-3"></div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-6">
+                        <h4 class="font-black mb-4 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-brand-500 text-white text-xs flex items-center justify-center">3</span>
+                            Tambahan opsional
+                        </h4>
+                        <div id="est-addons" class="grid sm:grid-cols-2 gap-3"></div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-6">
+                        <h4 class="font-black mb-4 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-brand-500 text-white text-xs flex items-center justify-center">4</span>
+                            Jumlah unit
+                        </h4>
+                        <label for="est-qty" class="flex justify-between text-xs font-bold mb-2">
+                            <span>Berapa banyak keluaran yang dibutuhkan?</span>
+                            <span id="est-qty-value" class="text-brand-500 mono">1 unit</span>
+                        </label>
+                        <input type="range" id="est-qty" min="1" max="300" value="1" step="1" class="w-full accent-brand-500 cursor-pointer">
+                        <p id="est-tier" class="text-xs text-gray-500 dark:text-gray-400 mt-2"></p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-1">
+                    <div class="sticky top-28 bg-darkbg-900 text-white rounded-2xl p-6 shadow-2xl border border-gray-700">
+                        <h4 class="font-black text-lg mb-1">Ringkasan Proyek</h4>
+                        <p class="text-xs text-gray-400 mb-6">Estimasi otomatis, bukan penawaran mengikat.</p>
+
+                        <div id="est-breakdown" class="space-y-2 text-sm mb-5 pb-5 border-b border-gray-700"></div>
+
+                        <div class="mb-2">
+                            <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">Estimasi total</p>
+                            <p id="est-total" class="text-3xl font-black text-brand-500">Rp 0</p>
+                            <p id="est-unit-price" class="text-xs text-gray-400 mt-1"></p>
+                        </div>
+
+                        <div class="mt-5 pt-5 border-t border-gray-700">
+                            <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mb-1">Perkiraan jadwal</p>
+                            <p id="est-days" class="text-xl font-black">—</p>
+                        </div>
+
+                        <div class="mt-5 pt-5 border-t border-gray-700">
+                            <p class="text-xs uppercase tracking-widest text-gray-400 font-bold mb-2">Layanan yang tercakup</p>
+                            <ul id="est-services" class="space-y-1.5 text-xs text-gray-300"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 7. METODE PDCA ===================== -->
+    <section id="metode" class="py-24 relative bg-gray-50 dark:bg-darkbg-900 transition-colors duration-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Metode Pelaksanaan</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-6">Project-Based Organization</h3>
+                <p class="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                    Setiap pelanggan membawa data, kebutuhan, dan hasil yang berbeda. Karena itu satu
+                    pesanan diperlakukan sebagai satu <strong>proyek</strong>: punya awal dan akhir,
+                    ruang lingkup, sumber daya, biaya, risiko, dan hasil yang dapat dievaluasi —
+                    dijalankan dengan siklus <strong>PDCA</strong>.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative mb-20">
+                <div class="hidden md:block absolute top-12 left-[10%] right-[10%] h-1 bg-gray-200 dark:bg-gray-700 z-0 rounded-full"></div>
+
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 transition-colors group" data-aos="fade-up">
+                    <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">P</div>
+                    <h4 class="font-bold mb-3 text-xl">Plan</h4>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-left">
+                        Menerima berkas GPX, mengidentifikasi jenis aktivitas dan informasi yang akan
+                        ditampilkan, menentukan desain, ukuran, bahan, jadwal, biaya, batas revisi,
+                        serta mengidentifikasi risiko seperti data tidak lengkap atau rute GPS tidak akurat.
+                    </p>
+                </div>
+
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="100">
                     <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">D</div>
                     <h4 class="font-bold mb-3 text-xl">Do</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Ekstraksi data GPX, pemodelan rute 3D, mencetak relief menggunakan *3D Printer*, dan perakitan manual bingkai.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-left">
+                        Mengekstrak rute dan statistik, menyederhanakan data bila perlu, membuat
+                        visualisasi digital, mengubah rute menjadi model tiga dimensi, menambahkan
+                        elemen personal, menyusun pratinjau, lalu produksi setelah desain disetujui.
+                    </p>
                 </div>
-                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="200">
+
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="200">
                     <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">C</div>
                     <h4 class="font-bold mb-3 text-xl">Check</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400"><em>Quality Control</em> memastikan ketepatan angka statistik lari, ejaan nama, dan kekokohan perakitan 3D.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-left">
+                        Memeriksa kesesuaian bentuk rute; ketepatan jarak, waktu, dan pace; ejaan nama
+                        dan tanggal; kesesuaian warna dan tata letak; kualitas cetak tiga dimensi;
+                        kekuatan perakitan; serta kondisi produk sebelum dikemas.
+                    </p>
                 </div>
-                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 dark:hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="300">
+
+                <div class="bg-white dark:bg-darkbg-800 p-8 rounded-2xl text-center relative z-10 border border-gray-100 dark:border-gray-700 shadow-lg hover:border-brand-500 transition-colors group" data-aos="fade-up" data-aos-delay="300">
                     <div class="w-20 h-20 mx-auto bg-gray-50 dark:bg-darkbg-900 rounded-full border-4 border-white dark:border-darkbg-700 shadow-md flex items-center justify-center mb-6 text-3xl font-black text-gray-300 dark:text-gray-600 group-hover:bg-brand-500 group-hover:text-white transition-colors">A</div>
                     <h4 class="font-bold mb-3 text-xl">Action</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Pengiriman bingkai fisik dengan pengemasan aman (anti pecah) ke alamat klien. Evaluasi dan penutupan proyek.</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-left">
+                        Melakukan koreksi bila ditemukan ketidaksesuaian, mengemas dan mengirim produk,
+                        mencatat hasil proyek dan masukan pelanggan, menutup proyek, lalu memakai hasil
+                        evaluasi untuk memperbaiki proyek berikutnya.
+                    </p>
+                </div>
+            </div>
+
+            <div class="max-w-5xl mx-auto mb-20" data-aos="fade-up">
+                <h4 class="text-center font-black text-xl mb-6">Pemetaan PDCA ke Siklus Proyek</h4>
+                <div class="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                    <table class="w-full text-sm bg-white dark:bg-darkbg-800">
+                        <thead class="bg-gray-100 dark:bg-darkbg-700 text-left">
+                            <tr>
+                                <th class="px-5 py-3 font-black">Siklus Proyek</th>
+                                <th class="px-5 py-3 font-black">PDCA</th>
+                                <th class="px-5 py-3 font-black">Aktivitas RouteStory</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr>
+                                <td class="px-5 py-4 font-semibold">Inisiasi dan perencanaan</td>
+                                <td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-500 font-bold text-xs">Plan</span></td>
+                                <td class="px-5 py-4 text-gray-600 dark:text-gray-400">Pengumpulan kebutuhan, validasi data awal, penetapan ruang lingkup, jadwal, dan biaya.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-5 py-4 font-semibold">Pelaksanaan</td>
+                                <td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-500 font-bold text-xs">Do</span></td>
+                                <td class="px-5 py-4 text-gray-600 dark:text-gray-400">Pengolahan GPX, visualisasi, pemodelan 3D, personalisasi, dan produksi.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-5 py-4 font-semibold">Monitoring dan pengendalian</td>
+                                <td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-500 font-bold text-xs">Check</span></td>
+                                <td class="px-5 py-4 text-gray-600 dark:text-gray-400">Pemeriksaan data, desain, kualitas cetak, dan hasil perakitan.</td>
+                            </tr>
+                            <tr>
+                                <td class="px-5 py-4 font-semibold">Penutupan dan evaluasi</td>
+                                <td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full bg-brand-500/10 text-brand-500 font-bold text-xs">Action</span></td>
+                                <td class="px-5 py-4 text-gray-600 dark:text-gray-400">Koreksi, penyerahan, dokumentasi, evaluasi, dan penutupan proyek.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="max-w-5xl mx-auto" data-aos="fade-up">
+                <h4 class="text-center font-black text-xl mb-3">Kegiatan Operasional Pendukung</h4>
+                <p class="text-center text-sm text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+                    Proyek adalah sumber utama penciptaan nilai, sedangkan kegiatan operasional di
+                    bawah ini menjaga kemampuan perusahaan menjalankan proyek secara berkelanjutan.
+                </p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-screwdriver-wrench text-brand-500 mt-0.5"></i> Pemeliharaan website &amp; sistem pemesanan
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-swatchbook text-brand-500 mt-0.5"></i> Pengelolaan template desain
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-print text-brand-500 mt-0.5"></i> Pemeliharaan perangkat produksi
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-boxes-stacked text-brand-500 mt-0.5"></i> Pengelolaan bahan &amp; inventaris
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-headset text-brand-500 mt-0.5"></i> Customer support
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-folder-open text-brand-500 mt-0.5"></i> Dokumentasi proyek &amp; portofolio
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-shield-halved text-brand-500 mt-0.5"></i> Keamanan &amp; masa simpan data pelanggan
+                    </div>
+                    <div class="bg-white dark:bg-darkbg-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm font-semibold flex items-start gap-3">
+                        <i class="fa-solid fa-arrows-rotate text-brand-500 mt-0.5"></i> Evaluasi berkelanjutan antar proyek
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 4. Struktur Organisasi -->
+    <!-- ===================== 8. STRUKTUR ORGANISASI ===================== -->
     <section id="organisasi" class="py-24 relative bg-white dark:bg-darkbg-800 border-t border-gray-200 dark:border-gray-800 transition-colors duration-500">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
             <div class="text-center mb-16" data-aos="fade-up">
-                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Tim Kami (4 Orang)</h2>
-                <h3 class="text-3xl md:text-5xl font-black">Project-Oriented Structure</h3>
-                <p class="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                    Struktur bagan fungsional berbasis proyek secara langsung untuk eksekusi operasional yang lincah.
+                <h2 class="text-brand-500 font-black tracking-[0.2em] uppercase text-sm mb-4">Tim Kami</h2>
+                <h3 class="text-3xl md:text-5xl font-black mb-4">Project-Oriented Structure</h3>
+                <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    Setiap anggota memiliki fungsi utama, tetapi bekerja bersama berdasarkan kebutuhan
+                    proyek pelanggan.
                 </p>
             </div>
 
-            <!-- BAGAN STRUKTUR ORGANISASI (HIERARCHY TREE) -->
-            <div class="flex flex-col items-center w-full max-w-5xl mx-auto overflow-x-auto pb-8">
-                
+            <div class="flex flex-col items-center w-full max-w-5xl mx-auto pb-8">
+
                 <!-- LEVEL 1: CIO -->
-                <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-72 text-center z-10 relative transition-colors duration-500" data-aos="fade-up">
-                    <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
-                        <i class="fa-solid fa-chess-king text-2xl"></i>
+                <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-88 max-w-full text-center z-10 relative transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/10" data-aos="fade-up">
+                    <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden mb-4 border-2 border-brand-500/40 shadow-lg relative group">
+                        <img src="assets/img/team-alexander.jpg" alt="Alexander Agung Widhi P." class="w-full h-full object-cover object-top transition duration-300 group-hover:scale-110">
                     </div>
                     <h4 class="font-bold text-lg">ALEXANDER AGUNG W.P.</h4>
-                    <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">CIO / Head of Project</div>
+                    <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-1 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">CIO / Head of Project</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                        Mengarahkan strategi teknologi, mengawasi portofolio proyek, dan memastikan proses digital mendukung tujuan bisnis.
+                    </p>
+                    <div class="flex justify-center items-center gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-600/50">
+                        <a href="https://www.linkedin.com/in/alexander-widhi-685418322/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="https://github.com/alexanderwidhiprojek-dotcom" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-github"></i></a>
+                        <a href="https://www.instagram.com/alexanderwidhi/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-instagram"></i></a>
+                    </div>
                 </div>
-                
-                <!-- Connector 1 -->
-                <div class="w-0.5 h-10 bg-gray-300 dark:bg-gray-600 transition-colors duration-500" data-aos="fade-in" data-aos-delay="100"></div>
-                
+
+                <div class="w-0.5 h-10 bg-gray-300 dark:bg-gray-600"></div>
+
                 <!-- LEVEL 2: PM -->
-                <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-72 text-center z-10 relative transition-colors duration-500" data-aos="fade-up" data-aos-delay="200">
-                    <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
-                        <i class="fa-solid fa-list-check text-2xl"></i>
+                <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-88 max-w-full text-center z-10 relative transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/10" data-aos="fade-up" data-aos-delay="150">
+                    <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden mb-4 border-2 border-brand-500/40 shadow-lg relative group">
+                        <img src="assets/img/team-raiz.jpg" alt="Muhammad Raiz Belyaa" class="w-full h-full object-cover object-top transition duration-300 group-hover:scale-110">
                     </div>
                     <h4 class="font-bold text-lg">MUHAMMAD RAIZ B.</h4>
-                    <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">Project Manager</div>
+                    <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-1 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">Project Manager</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                        Mengelola ruang lingkup, jadwal, biaya, risiko, komunikasi pelanggan, pembagian tugas, serta penutupan proyek.
+                    </p>
+                    <div class="flex justify-center items-center gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-600/50">
+                        <a href="https://www.linkedin.com/in/muhammad-raiz-belyaa-96a760322/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="https://www.instagram.com/mraizabel/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-instagram"></i></a>
+                    </div>
                 </div>
 
-                <!-- Connector 2 (Stem) -->
-                <div class="w-0.5 h-10 bg-gray-300 dark:bg-gray-600 transition-colors duration-500" data-aos="fade-in" data-aos-delay="300"></div>
+                <div class="w-0.5 h-10 bg-gray-300 dark:bg-gray-600"></div>
 
-                <!-- Horizontal Branch -->
-                <div class="w-[80%] md:w-[60%] border-t-2 border-gray-300 dark:border-gray-600 relative transition-colors duration-500" data-aos="zoom-in" data-aos-delay="300">
-                    <!-- Downward tips -->
-                    <div class="absolute left-0 top-0 w-0.5 h-8 bg-gray-300 dark:bg-gray-600 transform -translate-x-1/2 transition-colors duration-500"></div>
-                    <div class="absolute right-0 top-0 w-0.5 h-8 bg-gray-300 dark:bg-gray-600 transform translate-x-1/2 transition-colors duration-500"></div>
+                <div class="w-[80%] md:w-[60%] border-t-2 border-gray-300 dark:border-gray-600 relative">
+                    <div class="absolute left-0 top-0 w-0.5 h-8 bg-gray-300 dark:bg-gray-600 transform -translate-x-1/2"></div>
+                    <div class="absolute right-0 top-0 w-0.5 h-8 bg-gray-300 dark:bg-gray-600 transform translate-x-1/2"></div>
                 </div>
 
-                <!-- LEVEL 3: Staffs -->
-                <div class="w-[90%] md:w-[70%] flex justify-between mt-8 relative" data-aos="fade-up" data-aos-delay="400">
-                    <!-- Left Sibling -->
-                    <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-[45%] text-center z-10 relative transition-colors duration-500">
-                        <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
-                            <i class="fa-solid fa-database text-2xl"></i>
+                <!-- LEVEL 3: SIBLINGS -->
+                <div class="w-full md:w-[90%] grid md:grid-cols-2 gap-6 mt-10" data-aos="fade-up" data-aos-delay="300">
+                    <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 text-center z-10 relative transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/10">
+                        <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden mb-4 border-2 border-brand-500/40 shadow-lg relative group">
+                            <img src="assets/img/team-bimo.jpg" alt="Bimo Satrio" class="w-full h-full object-cover object-top transition duration-300 group-hover:scale-110">
                         </div>
                         <h4 class="font-bold text-lg">BIMO SATRIO</h4>
-                        <div class="text-brand-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">System & Data Analyst</div>
+                        <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-1 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">System &amp; Data Analyst</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                            Memvalidasi data aktivitas, menganalisis kebutuhan sistem, mengolah informasi rute, dan memastikan ketepatan statistik.
+                        </p>
+                        <div class="flex justify-center items-center gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-600/50">
+                            <a href="https://www.linkedin.com/in/bimo-satrio-b0917a23a/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-linkedin-in"></i></a>
+                            <a href="https://www.instagram.com/bimskuy1205/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-instagram"></i></a>
+                        </div>
                     </div>
-                    <!-- Right Sibling -->
-                    <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 w-[45%] text-center z-10 relative transition-colors duration-500">
-                        <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-brand-500">
-                            <i class="fa-solid fa-cube text-2xl"></i>
+
+                    <div class="bg-white dark:bg-darkbg-700 border-t-4 border-brand-500 shadow-xl rounded-2xl p-6 text-center z-10 relative transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-500/10">
+                        <div class="w-24 h-24 mx-auto rounded-2xl overflow-hidden mb-4 border-2 border-brand-500/40 shadow-lg relative group">
+                            <img src="assets/img/team-keirio.jpg" alt="Keirio Omar Attallah" class="w-full h-full object-cover object-top transition duration-300 group-hover:scale-110">
                         </div>
                         <h4 class="font-bold text-lg">KEIRIO OMAR A.</h4>
-                        <div class="text-brand-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-2 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">3D Designer & Production</div>
+                        <div class="text-brand-500 text-xs font-bold uppercase tracking-widest mt-1 bg-brand-50 dark:bg-brand-500/10 inline-block px-3 py-1 rounded-full">3D Designer &amp; Production</div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                            Membuat desain visual dan model tiga dimensi, mengelola pencetakan, perakitan, serta quality control fisik.
+                        </p>
+                        <div class="flex justify-center items-center gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-600/50">
+                            <a href="https://www.linkedin.com/in/keirio-omar-attallah-93611b147/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-linkedin-in"></i></a>
+                            <a href="https://github.com/OmarAeternal" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-github"></i></a>
+                            <a href="https://www.instagram.com/omar_attllh/" target="_blank" rel="noopener" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-brand-500 hover:text-white flex items-center justify-center text-xs transition"><i class="fa-brands fa-instagram"></i></a>
+                        </div>
                     </div>
                 </div>
+            </div>
 
+            <div class="max-w-3xl mx-auto mt-12 bg-gray-50 dark:bg-darkbg-700 border border-gray-200 dark:border-gray-600 rounded-2xl p-6" data-aos="fade-up">
+                <h4 class="font-black mb-3 flex items-center gap-2"><i class="fa-solid fa-sitemap text-brand-500"></i> Alur Koordinasi</h4>
+                <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    Project Manager menjadi penghubung antara pelanggan dan tim pelaksana. System &amp;
+                    Data Analyst memastikan data yang digunakan benar, sedangkan 3D Designer &amp;
+                    Production menerjemahkan data tersebut menjadi desain dan produk. CIO / Head of
+                    Project mengawasi konsistensi teknologi dan arah pengembangan perusahaan.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <strong>Rencana pengembangan:</strong> seiring bertambahnya proyek, fungsi tambahan
+                    yang akan dibuka mencakup Application Developer, UI/UX Designer, Customer Support,
+                    Marketing, dan Quality Assurance.
+                </p>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-gray-400 py-10 text-center relative z-10">
-        <div class="font-black text-xl tracking-tighter text-white flex justify-center items-center gap-2 mb-4 opacity-50 hover:opacity-100 transition-opacity">
-            Route<span class="text-brand-500">Story</span>
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="bg-gray-900 text-gray-400 pt-16 pb-10 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-10 mb-12">
+                <div class="md:col-span-2">
+                    <div class="font-black text-2xl tracking-tighter text-white flex items-center gap-2 mb-4">
+                        <span class="w-8 h-8 rounded bg-brand-500 flex justify-center items-center">
+                            <i class="fa-solid fa-route text-white text-sm"></i>
+                        </span>
+                        Route<span class="text-brand-500">Story</span>
+                    </div>
+                    <p class="text-sm leading-relaxed max-w-md">
+                        Mengubah rute olahragamu menjadi visualisasi personal, produk digital yang
+                        bisa dibagikan, dan memorabilia fisik untuk dipajang — setiap pesanan
+                        dikerjakan sebagai satu proyek.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="text-white font-bold text-sm uppercase tracking-widest mb-4">Layanan</h5>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#layanan" class="hover:text-brand-500 transition">Pengolahan Data Aktivitas</a></li>
+                        <li><a href="#layanan" class="hover:text-brand-500 transition">Poster Rute Digital</a></li>
+                        <li><a href="#layanan" class="hover:text-brand-500 transition">Pemodelan Rute 3D</a></li>
+                        <li><a href="#layanan" class="hover:text-brand-500 transition">Halaman Kenangan Lomba</a></li>
+                        <li><a href="#layanan" class="hover:text-brand-500 transition">Bingkai Rute Cetak 3D</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="text-white font-bold text-sm uppercase tracking-widest mb-4">Jelajahi</h5>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#tentang" class="hover:text-brand-500 transition">Tentang Perusahaan</a></li>
+                        <li><a href="#pipeline" class="hover:text-brand-500 transition">Proses Pengerjaan</a></li>
+                        <li><a href="#demo" class="hover:text-brand-500 transition">Coba Dulu</a></li>
+                        <li><a href="#estimator" class="hover:text-brand-500 transition">Estimasi Biaya</a></li>
+                        <li><a href="#organisasi" class="hover:text-brand-500 transition">Tim Kami</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-xs uppercase tracking-widest text-center md:text-left">
+                    Tugas Manajemen Industri Teknologi Informasi &copy; 2026
+                </p>
+                <p class="text-xs text-center md:text-right">
+                    Teknik Komputer &middot; Fakultas Ilmu Komputer &middot; Universitas Brawijaya
+                </p>
+            </div>
         </div>
-        <p class="text-xs uppercase tracking-widest">Tugas Akhir Manajemen Industri TI &copy; 2026</p>
     </footer>
 
-    <!-- Interactive Scripts -->
-    <script>
-        // DARK MODE TOGGLE LOGIC
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const darkIcon = document.getElementById('theme-toggle-dark-icon');
-        const lightIcon = document.getElementById('theme-toggle-light-icon');
+    <!-- ===================== MODAL DETAIL ===================== -->
+    <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+        <div class="modal-panel bg-white dark:bg-darkbg-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 my-8">
+            <div id="modal-content"></div>
+        </div>
+    </div>
 
-        // Set initial icon
-        if (document.documentElement.classList.contains('dark')) {
-            lightIcon.classList.remove('hidden');
-        } else {
-            darkIcon.classList.remove('hidden');
-        }
-
-        themeToggleBtn.addEventListener('click', function() {
-            // Toggle icons
-            darkIcon.classList.toggle('hidden');
-            lightIcon.classList.toggle('hidden');
-
-            // Toggle theme
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
-            }
-        });
-
-
-        // AOS Init after preloader finished
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                const preloader = document.getElementById('preloader');
-                preloader.style.opacity = '0';
-                preloader.style.visibility = 'hidden';
-                
-                // Initialize AOS after preloader is gone
-                setTimeout(() => {
-                    AOS.init({ once: true, offset: 50, duration: 800 });
-                }, 500);
-            }, 2500); // Wait 2.5s for intro animation
-        });
-
-        // 3D FRAME INTERACTIVE DRAG + AUTO SPIN LOGIC
-        const frameContainer = document.querySelector('.mockup-container');
-        const frame = document.querySelector('.mockup-frame');
-        let isDragging = false;
-        let previousX = 0, previousY = 0;
-        let currentRotX = 5, currentRotY = -15;
-        let spinSpeed = 0.3; // Speed of auto spin
-
-        // Animation Loop for auto spinning
-        function animateSpin() {
-            if (!isDragging) {
-                currentRotY += spinSpeed;
-                frame.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
-            }
-            requestAnimationFrame(animateSpin);
-        }
-        requestAnimationFrame(animateSpin);
-
-        // Mouse Events
-        frameContainer.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousX = e.pageX;
-            previousY = e.pageY;
-            frame.style.transition = 'none'; // Snappy dragging
-        });
-
-        window.addEventListener('mouseup', () => {
-            if(isDragging) {
-                isDragging = false;
-                // Add smooth transition back when they let go, auto spin resumes
-                frame.style.transition = 'transform 0.2s ease-out';
-                setTimeout(() => {
-                    frame.style.transition = 'none'; // remove transition for smooth auto spin
-                }, 200);
-            }
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            createTrail(e.pageX, e.pageY);
-
-            if (!isDragging) return;
-            e.preventDefault(); 
-            const deltaX = e.pageX - previousX;
-            const deltaY = e.pageY - previousY;
-            
-            // Adjust sensitivity
-            currentRotY += deltaX * 0.6;
-            currentRotX -= deltaY * 0.6; 
-            
-            currentRotX = Math.max(-80, Math.min(80, currentRotX));
-            
-            frame.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
-            
-            previousX = e.pageX;
-            previousY = e.pageY;
-        });
-
-        // Touch Events for Mobile Interaction
-        frameContainer.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            previousX = e.touches[0].pageX;
-            previousY = e.touches[0].pageY;
-            frame.style.transition = 'none';
-        }, {passive: false});
-
-        window.addEventListener('touchend', () => {
-            if(isDragging) {
-                isDragging = false;
-                frame.style.transition = 'transform 0.2s ease-out';
-                setTimeout(() => {
-                    frame.style.transition = 'none';
-                }, 200);
-            }
-        });
-
-        window.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            const deltaX = e.touches[0].pageX - previousX;
-            const deltaY = e.touches[0].pageY - previousY;
-            
-            currentRotY += deltaX * 0.8;
-            currentRotX -= deltaY * 0.8; 
-            currentRotX = Math.max(-80, Math.min(80, currentRotX));
-            
-            frame.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
-            
-            previousX = e.touches[0].pageX;
-            previousY = e.touches[0].pageY;
-        }, {passive: false});
-
-        // Function to create cursor trail
-        let lastTime = 0;
-        function createTrail(x, y) {
-            const now = Date.now();
-            if (now - lastTime < 30) return; 
-            lastTime = now;
-
-            const dot = document.createElement('div');
-            dot.className = 'trail-dot';
-            dot.style.left = (x - 5) + 'px'; 
-            dot.style.top = (y - 5) + 'px';
-            
-            document.body.appendChild(dot);
-            
-            setTimeout(() => {
-                dot.style.opacity = '0';
-                dot.style.transform = 'scale(2.5)';
-            }, 10);
-
-            setTimeout(() => {
-                dot.remove();
-            }, 500);
-        }
-    </script>
+    <!-- ===================== SKRIP ===================== -->
+    <script src="assets/js/catalog.js"></script>
+    <script src="assets/js/gpx-engine.js"></script>
+    <script src="assets/data/sample-gpx.js"></script>
+    <script src="assets/js/main.js"></script>
 </body>
 </html>

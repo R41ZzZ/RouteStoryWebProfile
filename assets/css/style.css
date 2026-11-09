@@ -1,0 +1,373 @@
+/*!
+ * ============================================================================
+ *  RouteStory — gaya kustom
+ *  Dipakai oleh: index.html
+ *  Tailwind (CDN) menangani layout & utility; berkas ini hanya memuat hal
+ *  yang tidak dapat diungkapkan sebagai utility class: animasi, 3D transform,
+ *  dan komponen interaktif.
+ * ============================================================================
+ */
+
+/* --------------------------------------------------------------------- *
+ * Dasar
+ * --------------------------------------------------------------------- */
+
+body {
+    transition: background-color .5s ease, color .5s ease;
+    cursor: default;
+}
+
+/* Hormati preferensi pengguna yang sensitif terhadap gerakan. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Offset agar anchor tidak tertutup navbar sticky setinggi 5rem. */
+section[id] {
+    scroll-margin-top: 5.5rem;
+}
+
+/* --------------------------------------------------------------------- *
+ * Preloader
+ * --------------------------------------------------------------------- */
+
+#preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity .8s ease-out, visibility .8s;
+}
+
+.logo-draw {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    animation: drawLogo 2s ease-in-out forwards;
+}
+
+@keyframes drawLogo {
+    to { stroke-dashoffset: 0; }
+}
+
+/* --------------------------------------------------------------------- *
+ * Jejak kursor pelari
+ * --------------------------------------------------------------------- */
+
+.trail-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fc4c02;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: opacity .5s ease-out, transform .5s ease-out;
+    box-shadow: 0 0 10px rgba(252, 76, 2, .8);
+}
+
+/* --------------------------------------------------------------------- *
+ * Utilitas visual
+ * --------------------------------------------------------------------- */
+
+.glass-nav {
+    backdrop-filter: blur(12px);
+    transition: background-color .5s ease, border-color .5s ease;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #fc4c02 0%, #ff9d00 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Latar grid halus untuk bagian bernuansa teknis. */
+.grid-bg {
+    background-image:
+        linear-gradient(to right, rgba(148, 163, 184, .13) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, .13) 1px, transparent 1px);
+    background-size: 44px 44px;
+}
+
+.mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                 "Liberation Mono", monospace;
+}
+
+/* --------------------------------------------------------------------- *
+ * Mockup bingkai 3D (hero)
+ * --------------------------------------------------------------------- */
+
+.mockup-container {
+    perspective: 1200px;
+    cursor: grab;
+}
+
+.mockup-container:active {
+    cursor: grabbing;
+}
+
+.mockup-frame {
+    width: 320px;
+    height: 400px;
+    border: 20px solid #1a1a1c;
+    border-radius: 12px;
+    background: #222;
+    box-shadow:
+        20px 20px 60px rgba(0, 0, 0, .3),
+        inset 0 0 0 8px #f5f5f5;
+    position: relative;
+    transform-style: preserve-3d;
+    user-select: none;
+}
+
+.frame-content {
+    transform: translateZ(20px);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    background-color: #1a1a1c;
+    display: flex;
+    flex-direction: column;
+}
+
+.frame-back {
+    position: absolute;
+    inset: -20px;
+    background: #111;
+    transform: translateZ(-1px) rotateY(180deg);
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #333;
+}
+
+.mockup-route {
+    filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, .7));
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: drawRoute 3s ease-out forwards 3s;
+}
+
+@keyframes drawRoute {
+    to { stroke-dashoffset: 0; }
+}
+
+/* --------------------------------------------------------------------- *
+ * Katalog layanan
+ * --------------------------------------------------------------------- */
+
+.service-card {
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    cursor: pointer;
+}
+
+.service-card:hover,
+.service-card:focus-visible {
+    transform: translateY(-6px);
+    border-color: #fc4c02;
+    box-shadow: 0 18px 40px -18px rgba(252, 76, 2, .55);
+}
+
+.service-card:focus-visible {
+    outline: 2px solid #fc4c02;
+    outline-offset: 3px;
+}
+
+/* Animasi masuk saat kartu difilter ulang. */
+.card-enter {
+    animation: cardEnter .32s ease both;
+}
+
+@keyframes cardEnter {
+    from { opacity: 0; transform: translateY(14px) scale(.98); }
+    to   { opacity: 1; transform: none; }
+}
+
+.filter-chip {
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+/* --------------------------------------------------------------------- *
+ * Modal detail layanan
+ * --------------------------------------------------------------------- */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+    background: rgba(9, 14, 23, .72);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .25s ease, visibility .25s;
+}
+
+.modal-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-panel {
+    width: 100%;
+    max-width: 56rem;
+    margin: auto;
+    transform: translateY(24px) scale(.97);
+    transition: transform .28s cubic-bezier(.22, 1, .36, 1);
+}
+
+.modal-backdrop.open .modal-panel {
+    transform: none;
+}
+
+/* --------------------------------------------------------------------- *
+ * Pipeline interaktif
+ * --------------------------------------------------------------------- */
+
+.pipeline-step {
+    transition: background-color .22s ease, border-color .22s ease,
+                color .22s ease, transform .22s ease;
+    cursor: pointer;
+}
+
+.pipeline-step:hover {
+    transform: translateY(-3px);
+}
+
+.pipeline-step[aria-selected="true"] {
+    background-color: #fc4c02;
+    border-color: #fc4c02;
+    color: #fff;
+    box-shadow: 0 12px 28px -12px rgba(252, 76, 2, .75);
+}
+
+.pipeline-step[aria-selected="true"] .pipeline-step-num,
+.pipeline-step[aria-selected="true"] .pipeline-step-pdca {
+    color: rgba(255, 255, 255, .85);
+}
+
+.pipeline-panel {
+    animation: cardEnter .3s ease both;
+}
+
+/* --------------------------------------------------------------------- *
+ * Demo mesin pengolah data
+ * --------------------------------------------------------------------- */
+
+.dropzone {
+    border: 2px dashed rgba(148, 163, 184, .55);
+    transition: border-color .2s ease, background-color .2s ease;
+}
+
+.dropzone.dragover {
+    border-color: #fc4c02;
+    background-color: rgba(252, 76, 2, .07);
+}
+
+/* Garis rute yang digambar bertahap setelah pipeline selesai. */
+.route-draw {
+    stroke-dasharray: var(--route-len, 2000);
+    stroke-dashoffset: var(--route-len, 2000);
+    animation: drawRoute 1.6s ease-out forwards;
+}
+
+.log-line {
+    animation: logIn .25s ease both;
+}
+
+@keyframes logIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Spinner kecil saat pipeline berjalan. */
+.spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(252, 76, 2, .25);
+    border-top-color: #fc4c02;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------- *
+ * Estimator
+ * --------------------------------------------------------------------- */
+
+.option-card {
+    transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+    cursor: pointer;
+}
+
+.option-card:hover {
+    transform: translateY(-2px);
+}
+
+.option-card.selected {
+    border-color: #fc4c02;
+    background-color: rgba(252, 76, 2, .08);
+}
+
+.option-card.selected .option-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.option-check {
+    opacity: 0;
+    transform: scale(.6);
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+/* Angka total yang berdenyut halus saat berubah. */
+.price-pulse {
+    animation: pricePulse .35s ease;
+}
+
+@keyframes pricePulse {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+/* --------------------------------------------------------------------- *
+ * Aksesibilitas
+ * --------------------------------------------------------------------- */
+
+.sr-only-focusable:focus {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100000;
+    width: auto;
+    height: auto;
+    padding: .75rem 1.25rem;
+    background: #fc4c02;
+    color: #fff;
+    border-radius: .5rem;
+    font-weight: 700;
+}
