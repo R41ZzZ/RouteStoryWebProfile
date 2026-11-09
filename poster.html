@@ -50,9 +50,9 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* 3D ROTATING SHADOWBOX STYLING */
+        /* 3D REALISTIC SHADOWBOX STYLING */
         .mockup-viewport {
-            perspective: 1200px;
+            perspective: 1400px;
             cursor: grab;
             user-select: none;
             touch-action: none;
@@ -63,53 +63,109 @@
 
         .mockup-3d-frame {
             width: 320px;
-            height: 390px;
-            border: 18px solid #141518;
+            height: 400px;
+            border: 20px solid #16171a; /* Thick wooden frame edge */
             border-radius: 14px;
-            background: #1c1d22;
+            background: #111215;
             position: relative;
             transform-style: preserve-3d;
             box-shadow: 
-                0 30px 60px -10px rgba(0, 0, 0, 0.7),
-                inset 0 0 0 6px #2a2c33;
+                0 30px 60px -10px rgba(0, 0, 0, 0.8),
+                inset 0 0 0 6px #282a30,
+                inset 0 0 12px rgba(0, 0, 0, 0.9);
             transition: box-shadow 0.3s ease;
         }
 
-        /* Front Face (Interior matting) */
+        /* Front Face (Interior matting & Glass reflection) */
         .frame-face-front {
-            transform: translateZ(24px);
+            transform: translateZ(26px);
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
             width: 100%;
             height: 100%;
-            padding: 20px;
-            background: radial-gradient(circle at 50% 35%, #24262c 0%, #15161a 100%);
-            border-radius: 4px;
+            padding: 22px;
+            background: radial-gradient(circle at 50% 30%, #22242a 0%, #131417 100%);
+            border-radius: 3px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
         }
 
-        /* Back Face */
+        /* Subtle Glass Glare/Reflection diagonal across front */
+        .frame-face-front::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                125deg,
+                rgba(255, 255, 255, 0.08) 0%,
+                rgba(255, 255, 255, 0.02) 25%,
+                transparent 45%
+            );
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        /* ULTRA-REALISTIC BACK FACE (Wood grain, hanging wire, swivel clips, certificate) */
         .frame-face-back {
             position: absolute;
-            inset: -18px;
-            background: #101114;
+            inset: -20px; /* Covers the 20px border thickness */
+            background: 
+                linear-gradient(rgba(28, 20, 15, 0.92), rgba(20, 15, 12, 0.95)),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 3px,
+                    rgba(0, 0, 0, 0.25) 3px,
+                    rgba(0, 0, 0, 0.25) 6px
+                ),
+                #231913; /* MDF/Plywood textured tone */
             transform: translateZ(-2px) rotateY(180deg);
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
             border-radius: 14px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #23252a;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            justify-content: space-between;
+            border: 3px solid #16171a;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
             padding: 24px;
-            text-align: center;
+            overflow: hidden;
+        }
+
+        /* Frame Metal Swivel Retaining Clips (Rivets on back) */
+        .frame-swivel-clip {
+            position: absolute;
+            width: 14px;
+            height: 28px;
+            background: #2a2c30;
+            border: 1px solid #4a4d55;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+        }
+        .clip-top { top: 8px; left: 50%; transform: translateX(-50%); }
+        .clip-bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
+        .clip-left { left: 8px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+        .clip-right { right: 8px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+
+        /* Metallic Frame Hanging Bracket / Sawtooth */
+        .sawtooth-bracket {
+            width: 60px;
+            height: 14px;
+            background: linear-gradient(180deg, #b8860b 0%, #8b6508 100%);
+            border-radius: 2px;
+            border: 1px solid #ffd700;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
         }
 
         /* 3D Elevated Route */
@@ -210,7 +266,7 @@
         <div class="relative z-10 my-3 flex flex-col justify-center items-center">
             
             <!-- 3D Frame Viewport (Drag to rotate) -->
-            <div class="mockup-viewport w-full h-[410px] flex items-center justify-center relative">
+            <div class="mockup-viewport w-full h-[420px] flex items-center justify-center relative">
                 <div class="mockup-3d-frame" id="interactiveFrame">
                     
                     <!-- FRONT FACE OF THE FRAME -->
@@ -310,7 +366,7 @@
                             <div class="popover-card bottom-full left-0 mb-2 w-full bg-slate-900/95 backdrop-blur-md p-3.5 rounded-xl border border-strava-500/50 shadow-2xl text-left">
                                 <h5 class="text-xs font-bold text-strava-400 uppercase tracking-wider mb-1">
                                     <i class="fa-solid fa-stopwatch mr-1"></i> Sinkronisasi Telemetri Strava
-                                </div>
+                                </h5>
                                 <p class="text-[11px] text-slate-300 leading-snug">
                                     Akurasi data elevasi, waktu bergerak, rata-rata detak jantung, dan pace diambil langsung dari aktivitas akun Strava Anda.
                                 </p>
@@ -319,26 +375,64 @@
 
                     </div>
 
-                    <!-- BACK FACE OF THE FRAME -->
+                    <!-- ULTRA-REALISTIC BACK FACE OF THE FRAME -->
                     <div class="frame-face-back">
-                        <div class="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-strava-500 text-2xl mb-3 shadow-inner">
-                            <i class="fa-solid fa-award"></i>
+                        
+                        <!-- Metal Retaining Clips Around Edge -->
+                        <div class="frame-swivel-clip clip-top"></div>
+                        <div class="frame-swivel-clip clip-bottom"></div>
+                        <div class="frame-swivel-clip clip-left"></div>
+                        <div class="frame-swivel-clip clip-right"></div>
+
+                        <!-- Top Hanging Hardware: Heavy Sawtooth Metal Bracket -->
+                        <div class="w-full flex justify-center pt-2">
+                            <div class="sawtooth-bracket">
+                                <span class="w-1.5 h-1.5 bg-[#4a3500] rounded-full"></span>
+                                <span class="w-1.5 h-1.5 bg-[#4a3500] rounded-full"></span>
+                            </div>
                         </div>
-                        <h4 class="text-white font-black text-base uppercase tracking-tight">Authentic Craftsmanship</h4>
-                        <p class="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                            Dilengkapi gantungan dinding presisi anti-karat, papan belakang *high-density woodboard*, dan segel garansi kualitas keaslian RouteStory.
-                        </p>
-                        <div class="mt-4 px-3 py-1 bg-strava-500/20 border border-strava-500/40 rounded-full text-strava-400 font-mono text-[9px] uppercase tracking-widest font-bold">
-                            Crafted by RouteStory Studio
+
+                        <!-- Center: Realistic Studio Production Certificate Label -->
+                        <div class="bg-[#f5edd6] text-[#221c16] rounded-md p-3.5 border border-[#c4b18c] shadow-md my-auto w-11/12 mx-auto transform -rotate-1 relative">
+                            <!-- Faux Stamp -->
+                            <div class="absolute -right-2 -bottom-2 w-12 h-12 rounded-full border-2 border-dashed border-[#b84218] text-[#b84218] flex items-center justify-center font-mono text-[7px] font-extrabold uppercase transform rotate-12 opacity-85">
+                                QC PASSED
+                            </div>
+
+                            <div class="flex items-center gap-2 border-b border-[#d8c7a6] pb-1.5 mb-2">
+                                <div class="w-5 h-5 rounded bg-[#fc4c02] text-white flex items-center justify-center text-[10px]">
+                                    <i class="fa-solid fa-route"></i>
+                                </div>
+                                <span class="font-extrabold text-xs tracking-tight">RouteStory Studio</span>
+                                <span class="ml-auto text-[8px] font-mono text-[#7a654c]">BATCH #2026-A</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[8px] font-mono text-[#574431]">
+                                <div><span class="text-[#8c7458]">Frame:</span> Matte Shadowbox</div>
+                                <div><span class="text-[#8c7458]">Core:</span> Solid Hardwood</div>
+                                <div><span class="text-[#8c7458]">Relief:</span> PLA+ Polymer</div>
+                                <div><span class="text-[#8c7458]">Assembly:</span> Hand-crafted ID</div>
+                            </div>
+
+                            <div class="mt-2 text-[7px] text-[#7a654c] leading-tight italic">
+                                "Every mile tells a story. Preserve yours in 3D."
+                            </div>
                         </div>
+
+                        <!-- Bottom: Serial & Production Footnote -->
+                        <div class="w-full flex justify-between items-center text-[8px] font-mono text-[#8c6b4e] px-2 pb-1 border-t border-[#3a2c20]">
+                            <span>SERIAL: RS-10K-04289</span>
+                            <span>HANDMADE IN INDONESIA</span>
+                        </div>
+
                     </div>
 
                 </div>
             </div>
 
             <!-- Interactivity Help Banner -->
-            <div class="mt-2 flex items-center gap-2 text-strava-400 bg-strava-500/10 px-4 py-1.5 rounded-full border border-strava-500/30 text-xs font-semibold animate-pulse">
-                <i class="fa-solid fa-hand-pointer"></i> <span>Tahan & Geser mouse untuk memutar 360° | Hover bagian bingkai untuk detail!</span>
+            <div class="mt-3 flex items-center gap-2 text-strava-400 bg-strava-500/10 px-4 py-1.5 rounded-full border border-strava-500/30 text-xs font-semibold animate-pulse">
+                <i class="fa-solid fa-hand-pointer"></i> <span>Tahan & Geser mouse untuk memutar 360° | Putar ke belakang untuk melihat detail bingkai!</span>
             </div>
 
         </div>
@@ -358,7 +452,7 @@
             <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3 text-center transition hover:border-strava-500/50">
                 <i class="fa-solid fa-shield-halved text-strava-400 text-sm mb-1"></i>
                 <h4 class="text-xs font-bold text-white">Kualitas Galeri</h4>
-                <p class="text-[10px] text-slate-400 leading-tight mt-0.5">Kayu matte & kaca anti-refleksi</p>
+                <p class="text-[10px] text-slate-400 leading-tight mt-0.5">Kayu matte & gantungan presisi</p>
             </div>
         </div>
 
@@ -388,15 +482,16 @@
 
     </div>
 
-    <!-- JAVASCRIPT: 3D AUTO-SPIN + DRAG INTERACTION -->
+    <!-- JAVASCRIPT: 3D AUTO-SPIN (SMOOTH & SLOW) + DRAG INTERACTION -->
     <script>
         const viewport = document.querySelector('.mockup-viewport');
         const frame = document.getElementById('interactiveFrame');
 
         let isDragging = false;
         let prevX = 0, prevY = 0;
-        let rotX = 6, rotY = -12;
-        const autoSpinSpeed = 0.35;
+        let rotX = 5, rotY = -10;
+        // Adjusted speed to be very smooth, gentle and calm (was 0.35, now 0.12)
+        const autoSpinSpeed = 0.12;
         let isHovered = false;
 
         // Auto spin loop
@@ -427,8 +522,8 @@
         window.addEventListener('mouseup', () => {
             if (isDragging) {
                 isDragging = false;
-                frame.style.transition = 'transform 0.3s ease-out';
-                setTimeout(() => frame.style.transition = 'none', 300);
+                frame.style.transition = 'transform 0.4s ease-out';
+                setTimeout(() => frame.style.transition = 'none', 400);
             }
         });
 
@@ -438,9 +533,9 @@
             const deltaX = e.pageX - prevX;
             const deltaY = e.pageY - prevY;
 
-            rotY += deltaX * 0.65;
-            rotX -= deltaY * 0.65;
-            rotX = Math.max(-75, Math.min(75, rotX)); // prevent full flip upside down
+            rotY += deltaX * 0.55;
+            rotX -= deltaY * 0.55;
+            rotX = Math.max(-75, Math.min(75, rotX));
 
             frame.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
             prevX = e.pageX;
@@ -458,8 +553,8 @@
         window.addEventListener('touchend', () => {
             if (isDragging) {
                 isDragging = false;
-                frame.style.transition = 'transform 0.3s ease-out';
-                setTimeout(() => frame.style.transition = 'none', 300);
+                frame.style.transition = 'transform 0.4s ease-out';
+                setTimeout(() => frame.style.transition = 'none', 400);
             }
         });
 
@@ -469,8 +564,8 @@
             const deltaX = e.touches[0].pageX - prevX;
             const deltaY = e.touches[0].pageY - prevY;
 
-            rotY += deltaX * 0.8;
-            rotX -= deltaY * 0.8;
+            rotY += deltaX * 0.7;
+            rotX -= deltaY * 0.7;
             rotX = Math.max(-75, Math.min(75, rotX));
 
             frame.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
