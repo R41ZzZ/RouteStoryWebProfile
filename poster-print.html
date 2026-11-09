@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RouteStory - Promotional Poster Print Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Space Grotesk"', 'monospace'],
+                    },
+                    colors: {
+                        strava: {
+                            400: '#ff7738',
+                            500: '#fc4c02',
+                            600: '#e34402',
+                            dark: '#c43a02'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        body {
+            background-color: #0b0f19;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color: #f1f5f9;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #fc4c02 0%, #ffaa00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 3D REALISTIC SHADOWBOX STYLING - FRONT FACING (FLAT TAMPAK DEPAN) */
+        .mockup-3d-frame {
+            width: 330px;
+            height: 410px;
+            border: 20px solid #16171a; /* Wooden Frame Edge */
+            border-radius: 14px;
+            background: #111215;
+            position: relative;
+            box-shadow: 
+                0 30px 60px -10px rgba(0, 0, 0, 0.8),
+                inset 0 0 0 6px #282a30,
+                inset 0 0 12px rgba(0, 0, 0, 0.9);
+            transform: none !important; /* Perfect Flat Front Facing */
+        }
+
+        /* Front Face */
+        .frame-face-front {
+            width: 100%;
+            height: 100%;
+            padding: 22px;
+            background: radial-gradient(circle at 50% 30%, #22242a 0%, #131417 100%);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+        }
+
+        /* Subtle Glass Glare */
+        .frame-face-front::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                125deg,
+                rgba(255, 255, 255, 0.09) 0%,
+                rgba(255, 255, 255, 0.02) 25%,
+                transparent 45%
+            );
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        /* 3D Elevated Route */
+        .relief-route {
+            filter: drop-shadow(0 14px 8px rgba(0, 0, 0, 0.75))
+                    drop-shadow(0 4px 4px rgba(252, 76, 2, 0.4));
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-8 sm:p-10 font-sans antialiased relative overflow-hidden">
+
+    <!-- Ambient Glowing Background Accents -->
+    <div class="absolute -top-24 -right-24 w-80 h-80 bg-strava-500/20 rounded-full blur-[90px] pointer-events-none"></div>
+    <div class="absolute top-1/2 -left-20 w-72 h-72 bg-orange-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+    <div class="absolute -bottom-20 right-1/4 w-96 h-96 bg-strava-500/15 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <!-- POSTER CONTENT WRAPPER (A4 Sized) -->
+    <div class="w-full max-w-[620px] flex flex-col justify-between h-full flex-grow relative z-10">
+
+        <!-- HEADER SECTION -->
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-5">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-strava-500 flex items-center justify-center text-white shadow-lg shadow-strava-500/40">
+                    <i class="fa-solid fa-route text-2xl"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-2xl tracking-tight text-white">Route<span class="text-strava-500">Story</span></span>
+                    <span class="block text-[10px] uppercase font-mono tracking-[0.25em] text-slate-400">3D Tangible Artwork</span>
+                </div>
+            </div>
+
+            <!-- Edisi Tag -->
+            <div class="px-4 py-1.5 rounded-full bg-strava-500/10 border border-strava-500/30 text-strava-400 text-xs font-semibold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-strava-500"></span>
+                Edisi Eksklusif Finisher
+            </div>
+        </div>
+
+        <!-- HERO HEADLINE -->
+        <div class="my-5 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-strava-500/10 border border-strava-500/30 text-strava-400 text-[11px] font-bold mb-2">
+                <i class="fa-solid fa-fire text-strava-500"></i> PROMO SPESIAL PELARI & CYCLIST 2026
+            </div>
+            <h1 class="text-4xl md:text-5xl font-black text-white leading-[1.15] tracking-tight">
+                Ubah Jejak Stravamu<br>
+                Menjadi <span class="text-gradient">Bingkai Nyata</span>
+            </h1>
+            <p class="mt-2 text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                Abadikan momen finis lari, maraton, dan gowes terbaikmu dalam wujud ukiran relief 3D fisik presisi tinggi yang dipajang elegan di rumah Anda.
+            </p>
+
+            <!-- PROMINENT CENTER PRICE HIGHLIGHT BANNER -->
+            <div class="mt-5 flex justify-center items-center">
+                <div class="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-strava-500/20 via-orange-500/30 to-strava-500/20 border-2 border-strava-500 shadow-[0_0_30px_rgba(252,76,2,0.45)]">
+                    <div class="flex items-center gap-2 text-strava-400 font-mono text-xs font-black uppercase tracking-widest">
+                        <i class="fa-solid fa-tag text-sm"></i>
+                        <span>HARGA MULAI DARI</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 text-white font-mono">
+                        <span class="text-base text-strava-400 font-bold">Rp</span>
+                        <span class="text-3xl sm:text-4xl font-black tracking-tight text-white">52.500</span>
+                        <span class="text-xs text-slate-300 font-sans font-normal ml-1">/paket</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D FRAME MOCKUP (PERFECT TAMPAK DEPAN / FRONT-FACING) -->
+        <div class="my-3 flex justify-center items-center">
+            <div class="mockup-3d-frame">
+                <!-- Front Face of Frame -->
+                <div class="frame-face-front">
+                    
+                    <!-- Header Inside Frame -->
+                    <div class="flex justify-between items-start text-left z-30">
+                        <div>
+                            <span class="text-[9px] font-mono tracking-widest uppercase text-slate-400 block flex items-center gap-1.5">
+                                <i class="fa-solid fa-medal text-strava-400 text-[10px]"></i> PERSONAL MEMORABILIA
+                            </span>
+                            <h3 class="text-base font-black tracking-tight text-white mt-0.5">JAKARTA 10K FINISHER</h3>
+                            <div class="w-10 h-1 bg-strava-500 rounded-full mt-1"></div>
+                        </div>
+                        <span class="text-[10px] bg-strava-500/20 text-strava-400 px-2 py-0.5 rounded-full font-mono border border-strava-500/40">
+                            100% PRESI
+                        </span>
+                    </div>
+
+                    <!-- 3D Elevated Route Sculpture -->
+                    <div class="my-2 flex-grow flex items-center justify-center relative z-20">
+                        <div class="relative w-48 h-40 flex items-center justify-center">
+                            <svg viewBox="0 0 200 180" class="w-full h-full relief-route overflow-visible">
+                                <defs>
+                                    <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#ff7b42" />
+                                        <stop offset="50%" stop-color="#fc4c02" />
+                                        <stop offset="100%" stop-color="#e34402" />
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Deep Base Shadow -->
+                                <path d="M 35 140 L 70 140 L 95 105 L 130 115 L 165 65 L 140 35 L 90 45 L 60 85 Z"
+                                      fill="none" stroke="#250c02" stroke-width="15" stroke-linejoin="round" stroke-linecap="round"
+                                      transform="translate(6, 10)" opacity="0.8" />
+
+                                <!-- 3D Extrusion Layer -->
+                                <path d="M 35 140 L 70 140 L 95 105 L 130 115 L 165 65 L 140 35 L 90 45 L 60 85 Z"
+                                      fill="none" stroke="#752200" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"
+                                      transform="translate(3, 5)" />
+
+                                <!-- Top Colored Relief Track -->
+                                <path d="M 35 140 L 70 140 L 95 105 L 130 115 L 165 65 L 140 35 L 90 45 L 60 85 Z"
+                                      fill="none" stroke="url(#routeGradient)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" />
+
+                                <!-- Start Pin -->
+                                <circle cx="35" cy="140" r="5.5" fill="#ffffff" stroke="#fc4c02" stroke-width="2.5" />
+                                <circle cx="35" cy="140" r="2" fill="#fc4c02" />
+
+                                <!-- Finish Pin -->
+                                <circle cx="60" cy="85" r="5.5" fill="#fc4c02" stroke="#ffffff" stroke-width="2.5" />
+                                <circle cx="60" cy="85" r="2" fill="#ffffff" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Stats Grid Inside Frame -->
+                    <div class="w-full grid grid-cols-3 gap-2 border-t border-white/10 pt-3 text-center z-30">
+                        <div>
+                            <span class="text-[8px] font-mono uppercase text-slate-400 block font-semibold">Distance</span>
+                            <span class="text-xs font-bold text-white font-mono">10.14<span class="text-[9px] text-strava-400 font-sans ml-0.5">km</span></span>
+                        </div>
+                        <div>
+                            <span class="text-[8px] font-mono uppercase text-slate-400 block font-semibold">Avg Pace</span>
+                            <span class="text-xs font-bold text-white font-mono">5'42"<span class="text-[9px] text-strava-400 font-sans ml-0.5">/km</span></span>
+                        </div>
+                        <div>
+                            <span class="text-[8px] font-mono uppercase text-slate-400 block font-semibold">Duration</span>
+                            <span class="text-xs font-bold text-white font-mono">57m 48s</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- PROMOTIONAL PACKAGES -->
+        <div class="grid grid-cols-3 gap-3 my-3">
+            <div class="bg-slate-800/70 border border-slate-700/70 rounded-xl p-3 text-center">
+                <div class="text-[9px] font-mono text-strava-400 uppercase font-bold">Paket Digital</div>
+                <h4 class="text-xs font-bold text-white mt-0.5">Poster & 3D STL</h4>
+                <p class="text-[10px] text-slate-200 font-bold mt-1">Mulai Rp 52.500</p>
+                <p class="text-[9px] text-slate-400 mt-0.5">Kirim instan via email</p>
+            </div>
+            <div class="bg-slate-800/90 border border-strava-500/60 rounded-xl p-3 text-center relative shadow-lg shadow-strava-500/10">
+                <span class="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-strava-500 text-white text-[8px] font-black uppercase px-2 py-0.2 rounded-full">BEST SELLER</span>
+                <div class="text-[9px] font-mono text-strava-400 uppercase font-bold">Bingkai 3D Fisik</div>
+                <h4 class="text-xs font-bold text-white mt-0.5">Shadowbox Eksklusif</h4>
+                <p class="text-[10px] text-strava-400 font-extrabold mt-1">Mulai Rp 245.000</p>
+                <p class="text-[9px] text-slate-400 mt-0.5">Cetak relief timbul + kayu</p>
+            </div>
+            <div class="bg-slate-800/70 border border-slate-700/70 rounded-xl p-3 text-center">
+                <div class="text-[9px] font-mono text-strava-400 uppercase font-bold">Event & Komunitas</div>
+                <h4 class="text-xs font-bold text-white mt-0.5">Batch Pesanan Klub</h4>
+                <p class="text-[10px] text-slate-200 font-bold mt-1">Mulai Rp 24.500<span class="text-[8px] text-slate-400">/org</span></p>
+                <p class="text-[9px] text-slate-400 mt-0.5">Diskon event maraton</p>
+            </div>
+        </div>
+
+        <!-- SPECIAL OFFER & GUARANTEE -->
+        <div class="my-2 p-3 rounded-xl bg-gradient-to-r from-strava-500/15 via-orange-500/20 to-transparent border border-strava-500/30 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-gift text-strava-500 text-base"></i>
+                <div>
+                    <span class="font-bold text-white block">Gratis Pratinjau Digital Sebelum Cetak</span>
+                    <span class="text-[10px] text-slate-300">Garansi revisi bentuk rute hingga presisi 100%</span>
+                </div>
+            </div>
+            <span class="px-2.5 py-1 bg-strava-500 text-white font-bold rounded-lg text-[10px] uppercase font-mono tracking-wider">
+                100% Presisi
+            </span>
+        </div>
+
+        <!-- FOOTER / CALL TO ACTION & QR CODE -->
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-between gap-4">
+            <div>
+                <span class="text-[10px] font-mono uppercase tracking-widest text-strava-400 font-bold block">Pesan Kustom Sekarang:</span>
+                <p class="text-base font-extrabold text-white">route-story-web-profile.vercel.app</p>
+                <div class="flex items-center gap-3 mt-1 text-[11px] text-slate-400">
+                    <span><i class="fa-brands fa-strava text-strava-500 mr-1"></i>Upload GPX / Strava</span>
+                    <span>&bull;</span>
+                    <span><i class="fa-solid fa-truck-fast text-strava-500 mr-1"></i>Kirim Se-Indonesia</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 bg-white p-1.5 rounded-xl shadow-lg border border-slate-700 flex items-center justify-center">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://route-story-web-profile.vercel.app/&color=121316&bgcolor=ffffff" 
+                         alt="QR Code RouteStory" 
+                         class="w-full h-full object-contain" />
+                </div>
+                <span class="text-[8px] font-mono tracking-widest text-slate-400 uppercase mt-1">Scan Disini</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
